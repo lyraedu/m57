@@ -1,14 +1,14 @@
 # Building and publishing M57
 
-The public repository is `akshay-abraham/m57`. Akshay created it and ran the
-initial workflows. Signed publication is complete only after the release job
-passes and its APK/source assets appear in GitHub Releases.
+Signed M57 prereleases are published in [GitHub Releases](https://github.com/lyraedu/m57/releases).
+Publication is complete only after the release job passes and its APK, exact
+source, checksums, and notices appear there.
 
 ## Build online (recommended)
 
 ```sh
 cd ~/m57
-bash scripts/release-online.sh 0.6.3
+bash scripts/release-online.sh 0.7.0 # example: choose an unused higher version
 ```
 
 This only pushes committed source, uploads the saved private signing material to
@@ -16,7 +16,7 @@ GitHub Actions secrets and triggers the version workflow. All Android downloads,
 compilation, tests, lint, signing and publication run on GitHub's hosted runners.
 No local Android build, SDK or emulator is required. Git, GitHub CLI, Python and
 the existing Java keytool are sufficient for the lightweight setup/key check.
-Watch progress at `https://github.com/akshay-abraham/m57/actions` and download a
+Watch progress at `https://github.com/lyraedu/m57/actions` and download a
 successful signed build from GitHub Releases.
 
 After the first setup, future releases can be started entirely from GitHub's
@@ -83,17 +83,10 @@ Keep application ID `com.lyra.blocker` and the established signing key when
 updating an existing installation. A different key cannot update that APK in
 place. Preserve and back up the existing keystore privately before changing
 distribution. A CI-generated debug key is not a stable production identity.
-Akshay confirmed the installed app is a debug APK with no release key yet. A
-separate private RSA-4096 release key is now stored locally under
-`~/.local/share/m57/signing`, with owner-only directory/file permissions. The
-existing local debug keystore was preserved there too; its fingerprint has not
-been compared with the installed phone APK. Credentials are in the private
-`credentials.json`, with public certificate/digest alongside. None of this
-private directory belongs in Git. Back it up privately before using the key.
-
-The new release key cannot update a debug-signed installation in place. Keep
-that installation intact until its configuration/protection has been deliberately
-migrated. No uninstall, data clearing or signing-key replacement was performed.
+Keep the established distribution keystore and its credentials outside Git,
+backed up privately. A release key cannot update a debug-signed installation in
+place; plan that transition and preserve settings before replacing an installed
+debug build.
 
 Configure repository Actions secrets privately, never in a commit or issue:
 
@@ -105,11 +98,11 @@ Configure repository Actions secrets privately, never in a commit or issue:
 | `M57_KEY_PASSWORD` | Its key password |
 | `M57_SIGNER_SHA256` | Expected public certificate SHA-256 digest, with or without colons |
 
-After the public repository exists, configure its Actions secrets without printing
+Configure repository Actions secrets without printing
 passwords or passing them as command-line arguments:
 
 ```sh
-python3 scripts/upload-signing-secrets.py --repository akshay-abraham/m57
+python3 scripts/upload-signing-secrets.py --repository lyraedu/m57
 ```
 
 This setup command sends the key to the explicitly named repository. It requires
@@ -125,14 +118,14 @@ on the tag job and removed afterwards; pull-request checks receive none of it.
 
 ## Release from the GitHub website
 
-One time, after pushing the workflows, upload the established key privately:
+Before the first signed release in a repository, upload the established key privately:
 
 ```sh
-python3 scripts/upload-signing-secrets.py --repository akshay-abraham/m57
+python3 scripts/upload-signing-secrets.py --repository lyraedu/m57
 ```
 
 Then open **Actions → Prepare a signed release → Run workflow**, select `main`,
-enter a version greater than the current one (for example `0.6.3` after `0.6.2`)
+enter a version greater than the current one
 and optional notes. The job increments Android versionCode, writes notes without
 overwriting existing files, commits to main and atomically pushes its new tag.
 It explicitly dispatches the signed pipeline, because tags pushed with the
@@ -157,9 +150,9 @@ Update Android versionCode/versionName and add `docs/releases/<version>.md`.
 Run the checklist on the intended device and record results honestly. Push a
 matching version tag, for example `v0.6.0`, to run tests, lint, debug/release
 builds, signature verification and automatic GitHub prerelease publication.
-Only push a release tag when its source is ready for distribution. The initial
-pipeline marks builds as prereleases because device acceptance is outstanding.
-Preparing these workflows does not itself publish a tag or signed APK.
+Only push a release tag when its source is ready for distribution. The pipeline
+publishes prereleases. Record target-device acceptance separately; preparing a
+workflow does not itself publish a tag or signed APK.
 
 Each release includes a signed APK, a `git archive` of its exact source,
 SHA256SUMS, public certificate details and licenses/notices. Source archives

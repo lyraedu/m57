@@ -1,5 +1,11 @@
 # M57 0.6.2 implementation status
 
+> Historical implementation record from 26 October 2026. The later
+> [v0.6.3 prerelease](https://github.com/lyraedu/m57/releases/tag/v0.6.3) and its
+> [successful signed workflow](https://github.com/lyraedu/m57/actions/runs/40325554802)
+> supersede the older build/publication attempts below. Device acceptance still
+> requires the [phone checklist](../DEVICE_TESTS.md).
+
 Updated 26 October 2026. Akshay's normal terminal now has JDK 17/SDK 35;
 its previous debug/release tests and APK assembly completed, while lint exposed
 two API-analysis errors. Those errors have targeted documented fixes in source.
