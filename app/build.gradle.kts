@@ -13,8 +13,8 @@ android {
         applicationId = "com.lyra.blocker"
         minSdk = 34
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.6.3"
+        versionCode = 10
+        versionName = "0.6.4"
         buildConfigField("String", "SOURCE_REF", "\"$sourceRef\"")
         buildConfigField("String", "SOURCE_URL", "\"https://github.com/lyraedu/m57${if (sourceRef.isEmpty()) "" else "/tree/$sourceRef"}\"")
     }
