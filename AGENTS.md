@@ -25,6 +25,15 @@ This file applies to the whole repository. Read a nearer `AGENTS.md` before chan
 
 ## Change workflow
 
+If a requested result needs a missing asset or tool, outside help, or command
+permission, tell Akshay immediately and state exactly what is needed. Do not
+substitute a fragile visual or technical workaround. Continue independent work
+while waiting for the needed input.
+
+For requested work, choose the appropriate branch and commit the completed
+changes without asking Akshay whether to branch or commit. Follow the repository's
+deployment and release boundaries when deciding where to push.
+
 1. Check the working tree and read the owning source, tests, and relevant docs. Preserve unrelated local changes.
 2. For detection changes, include a positive case and a nearby false-positive boundary. Review supported package names, UI labels, localized/OEM behavior, and the inability to inspect hidden content.
 3. For settings or lifecycle changes, trace save/load, service reconnect, screen lock, reboot, permission revocation, and explicit pause or maintenance windows.

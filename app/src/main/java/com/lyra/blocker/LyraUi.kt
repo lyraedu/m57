@@ -16,14 +16,14 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 
-/** Lightweight native components using warm neutrals and Lyra orange. */
+/** Lightweight native components using the M57 ring and Lyra's warm palette. */
 object LyraUi {
-    val background = Color.rgb(251, 250, 249)
-    val ink = Color.rgb(39, 34, 30)
+    val background = Color.rgb(251, 248, 245)
+    val ink = Color.rgb(62, 46, 39)
     val muted = Color.rgb(117, 107, 99)
-    val orange = Color.rgb(244, 91, 11)
+    val orange = Color.rgb(213, 106, 58)
     val line = Color.rgb(235, 232, 230)
-    val soft = Color.rgb(247, 245, 243)
+    val soft = Color.rgb(248, 233, 218)
     fun dp(context: Context, value: Int) = (value * context.resources.displayMetrics.density).toInt()
     fun shape(color: Int, radius: Float = 24f, border: Int? = null) = GradientDrawable().apply {
         setColor(color)
@@ -84,7 +84,7 @@ object LyraUi {
     fun brand(context: Context) = LinearLayout(context).apply {
         gravity = Gravity.CENTER_VERTICAL
         addView(ImageView(context).apply {
-            setImageResource(R.drawable.lyra_logo)
+            setImageResource(R.drawable.m57_logo)
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }, LinearLayout.LayoutParams(dp(context, 36), dp(context, 36)))
         addView(text(context, context.getString(R.string.app_name), 25f, ink, true).apply {

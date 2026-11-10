@@ -71,6 +71,8 @@ historical baselines; the current password-migration checks are listed below.
 17. Update to version 0.3.0 with the same signing key. Verify **M57** appears in
     the launcher, App info and Accessibility settings, while Lyra remains the
     PWA destination. Existing PIN/settings must remain intact.
+    Check that the launcher uses the M57 ring icon and the M57 screens and
+    overlays show the same ring without a Lyra symbol.
 18. With accessibility/protection enabled, long-press M57 → App info. Verify the
     page closes and M57's administrator guidance opens. Repeat several times,
     including through Settings → Apps. Other apps' App info, the app list/search,

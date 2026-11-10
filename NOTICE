@@ -1,5 +1,10 @@
 M57 — Lyra companion and reduced Curbox fork
 
+The M57 ring artwork and application icon installed on 2026-11-10 were supplied
+by the project owner. The checked-in launcher and UI images are cropped and
+resized derivatives. The ring is M57's own mark and does not include Lyra's
+symbol or wordmark.
+
 Upstream: https://github.com/curbox-app/curbox-android
 Revision: 55ae8167c2e823fbf6d4cc44cdab7ae4a1cff9f3
 Upstream license: GNU General Public License, version 3 (LICENSES/GPL-3.0-only.txt).

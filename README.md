@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="M57 app icon" width="108" height="108" />
+  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="M57 ring app icon" width="108" height="108" />
 </p>
 
 <h1 align="center">M57</h1>
