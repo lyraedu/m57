@@ -63,8 +63,6 @@ class ProtectionStore(context: Context) {
         get() = prefs.getStringSet("extra_packages", emptySet())!!.toSet()
         set(value) { require(value.all(BlockPolicy::validPackage)); prefs.edit().putStringSet("extra_packages", value.toSet()).apply() }
     val hasPassword: Boolean get() = prefs.contains("password_hash")
-    val hasCredential: Boolean get() = hasPassword || prefs.contains("pin_hash")
-    val needsPasswordUpgrade: Boolean get() = !hasPassword && prefs.contains("pin_hash")
     val consented: Boolean get() = prefs.getBoolean("consent", false)
     fun consent() { prefs.edit().putBoolean("consent", true).commit() }
 
@@ -106,7 +104,8 @@ class ProtectionStore(context: Context) {
     fun savePassword(hash: PasswordCredential.Hash) {
         check(prefs.edit().putString("password_salt", hash.salt).putString("password_hash", hash.digest)
             .putInt("password_rounds", PasswordCredential.ITERATIONS)
-            .remove("pin_hash").remove("pin_salt").remove("failures").remove("retry_after").remove("retry_wall").commit()) {
+            .remove("pin_hash").remove("pin_salt")
+            .remove("failures").remove("retry_after").remove("retry_wall").commit()) {
             "Password could not be saved"
         }
     }
@@ -114,10 +113,9 @@ class ProtectionStore(context: Context) {
         prefs.getLong("retry_after", 0), prefs.getInt("retry_boot", -2), bootCount(),
         System.currentTimeMillis(), SystemClock.elapsedRealtime()) + 999) / 1000
     fun verifyCredential(value: String): Boolean {
-        if (!hasCredential || retrySeconds > 0) return false
-        val prefix = if (hasPassword) "password" else "pin"
-        val correct = PasswordCredential.verify(value, prefs.getString("${prefix}_salt", null),
-            prefs.getString("${prefix}_hash", null), if (hasPassword) prefs.getInt("password_rounds", 0) else 120_000)
+        if (!hasPassword || retrySeconds > 0) return false
+        val correct = PasswordCredential.verify(value, prefs.getString("password_salt", null),
+            prefs.getString("password_hash", null), prefs.getInt("password_rounds", 0))
         if (correct) prefs.edit().remove("failures").remove("retry_after").remove("retry_wall").commit()
         else {
             val failures = prefs.getInt("failures", 0).coerceIn(0, 1000) + 1

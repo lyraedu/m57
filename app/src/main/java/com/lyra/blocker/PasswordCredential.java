@@ -40,7 +40,7 @@ public final class PasswordCredential {
 
     public static boolean verify(String password, String salt, String digest, int iterations) {
         if (password.codePointCount(0, password.length()) > 128 || password.isEmpty()) return false;
-        if (iterations != ITERATIONS && iterations != 120_000) return false;
+        if (iterations != ITERATIONS) return false;
         if (salt == null || digest == null || !salt.matches("[a-f0-9]{64}") || !digest.matches("[a-f0-9]{64}")) return false;
         return MessageDigest.isEqual(derive(password, unhex(salt), iterations), unhex(digest));
     }

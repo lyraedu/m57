@@ -148,9 +148,9 @@ class MainActivity : Activity() {
     private fun showHome() {
         unlocked = false
         val page = page()
-        val ready = accessibilityEnabled() && store.hasCredential && store.consented && store.setupComplete
+        val ready = accessibilityEnabled() && store.hasPassword && store.consented && store.setupComplete
         page.addView(LyraUi.badge(this, when {
-            !store.hasCredential -> "YOUR NEXT CHAPTER"
+            !store.hasPassword -> "YOUR NEXT CHAPTER"
             !ready -> "SETUP NEEDS ATTENTION"
             store.paused -> "PROTECTION PAUSED"
             else -> "PROTECTION IS ON"
@@ -158,7 +158,7 @@ class MainActivity : Activity() {
         title(page, "Your space to think.", "A little more intention. Thoughtful AI, fewer distractions, and more room for you.")
         if (!ready) {
             routeCard(page, "↗", "M57 is not set up", "Take a few guided steps to protect this learning space.") {
-                if (store.hasCredential) askPassword() else consentAndSetup()
+                if (store.hasPassword) askPassword() else consentAndSetup()
             }
         }
         page.addView(LyraUi.card(this).apply {
@@ -167,8 +167,8 @@ class MainActivity : Activity() {
             addView(LyraUi.feature(this@MainActivity, "Ⅱ", "A little less scrolling", "Boundaries and reminders for short-video spaces."))
         })
         page.addView(LyraUi.button(this, "Open Lyra  ↗") { openLyra() })
-        page.addView(LyraUi.button(this, if (store.hasCredential) "Administrator access" else "Set up M57", false) {
-            if (store.hasCredential) askPassword() else consentAndSetup()
+        page.addView(LyraUi.button(this, if (store.hasPassword) "Administrator access" else "Set up M57", false) {
+            if (store.hasPassword) askPassword() else consentAndSetup()
         })
         page.addView(LyraUi.link(this, "Set up or find the Lyra PWA") { showPwaGuide() })
         page.addView(LyraUi.link(this, "About & open-source licenses") { showLicenses() })
@@ -492,7 +492,7 @@ class MainActivity : Activity() {
     }
 
     private fun consentAndSetup() {
-        if (store.hasCredential) { askPassword(); return }
+        if (store.hasPassword) { askPassword(); return }
         val page = page()
         setBack { showHome() }
         title(page, "A thoughtful start.", "First, understand what M57 can see and do.")
@@ -513,40 +513,36 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun passwordField(label: String, legacy: Boolean = false) = LyraUi.field(EditText(this)).apply {
+    private fun passwordField(label: String) = LyraUi.field(EditText(this)).apply {
         hint = label
         setSingleLine(true)
-        inputType = if (legacy) InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
-            else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-        filters = arrayOf(android.text.InputFilter.LengthFilter(if (legacy) 12 else 256))
+        inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        filters = arrayOf(android.text.InputFilter.LengthFilter(256))
         importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
         isSaveEnabled = false
     }
 
     private fun askPassword() {
-        if (!store.hasCredential) { consentAndSetup(); return }
+        if (!store.hasPassword) { consentAndSetup(); return }
         val page = page()
         setBack { showHome() }
-        val legacy = store.needsPasswordUpgrade
-        title(page, if (legacy) "A stronger next step." else "Your admin space.",
-            if (legacy) "Verify your existing PIN once, then replace it with a stronger administrator password."
-            else "A little privacy for the person looking after this device.")
-        val field = passwordField(if (legacy) "Current administrator PIN" else "Administrator password", legacy)
+        title(page, "Your admin space.", "A little privacy for the person looking after this device.")
+        val field = passwordField("Administrator password")
         page.addView(field)
         val feedback = LyraUi.text(this, "", 14f, LyraUi.muted).apply { accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE }
         page.addView(feedback)
         fun waitMessage() = "Please wait ${store.retrySeconds} seconds before trying again."
         if (store.retrySeconds > 0) feedback.text = waitMessage()
         lateinit var submit: Button
-        submit = LyraUi.button(this, if (legacy) "Verify PIN" else "Unlock administrator space") {
+        submit = LyraUi.button(this, "Unlock administrator space") {
             if (store.retrySeconds > 0) { feedback.text = waitMessage(); return@button }
             val value = field.text.toString()
             field.text.clear()
             backgroundWork(submit, { store.verifyCredential(value) }) { valid ->
                 if (valid) {
                     unlocked = true
-                    if (legacy) showPasswordSetup() else navigate(if(store.setupComplete)AdminPage.OVERVIEW else AdminPage.SETUP)
-                } else feedback.text = if (store.retrySeconds > 0) waitMessage() else "That ${if (legacy) "PIN" else "password"} did not match. Please try again."
+                    navigate(if(store.setupComplete)AdminPage.OVERVIEW else AdminPage.SETUP)
+                } else feedback.text = if (store.retrySeconds > 0) waitMessage() else "That password did not match. Please try again."
             }
         }
         page.addView(submit)
@@ -555,11 +551,11 @@ class MainActivity : Activity() {
     }
 
     private fun showPasswordSetup(initialConsent: Boolean = false) {
-        if (store.hasCredential && !unlocked) { lockAndHome(); return }
-        if (!store.hasCredential && !initialConsent) { consentAndSetup(); return }
+        if (store.hasPassword && !unlocked) { lockAndHome(); return }
+        if (!store.hasPassword && !initialConsent) { consentAndSetup(); return }
         val page = page()
         setBack { if (store.hasPassword && unlocked) navigate(AdminPage.SETTINGS) else lockAndHome() }
-        title(page, if (store.needsPasswordUpgrade) "Make the switch." else "Keep the keys with you.", "Use at least 12 characters. A long, memorable passphrase is welcome.")
+        title(page, "Keep the keys with you.", "Use at least 12 characters. A long, memorable passphrase is welcome.")
         val first = passwordField("Administrator password")
         val second = passwordField("Confirm password")
         page.addView(first); page.addView(second)
@@ -593,7 +589,7 @@ class MainActivity : Activity() {
         })
         lateinit var submit: Button
         submit = LyraUi.button(this, "Save administrator password") {
-            if (store.hasCredential && !unlocked) return@button
+            if (store.hasPassword && !unlocked) return@button
             val value = first.text.toString()
             val problem = PasswordCredential.problem(value)
             when {

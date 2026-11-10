@@ -91,11 +91,10 @@ historical baselines; the current password-migration checks are listed below.
     category breadcrumbs, Android Back and Lock & leave. Scroll down/up and
     near the bottom; check dock visibility, keyboard overlap, touch exploration,
     large fonts and landscape. Planned categories must not imply filtering is active.
-22. Update a configured 0.3.0 installation with the same signing key. Verify the
-    old PIN first, then create the new password; an incorrect PIN must not
-    permit migration. The old PIN must stop working after migration. Preserve
-    destination/package/countdown settings. Cancel/background migration and
-    verify it cannot complete or unlock a stale screen.
+22. Update a current password-based installation with the same signing key.
+    Verify the administrator password still unlocks, its cooldown still works,
+    and destination/package/countdown settings survive. PIN-only prerelease
+    builds are unsupported; test a fresh setup after clearing that app's data.
 23. On each of the six supported manufacturers, check **Allow background running**
     opens Android's real battery-optimisation request. Deny/dismiss it and ensure
     the UI still says it is not allowed. Grant it and verify the PowerManager

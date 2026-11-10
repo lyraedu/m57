@@ -128,7 +128,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
     }
 
     private fun currentTarget(): Target? {
-        if (!store.consented || !store.hasCredential || store.paused ||
+        if (!store.consented || !store.hasPassword || store.paused ||
             !getSystemService(PowerManager::class.java).isInteractive ||
             getSystemService(KeyguardManager::class.java).isKeyguardLocked) return null
         // Select an application window so our non-focusable shield and keyboards

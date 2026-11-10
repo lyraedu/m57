@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.lyra.blocker;
 
-import java.util.Arrays;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-
 /** The same checks run under JUnit/Gradle and directly with a JDK when Android tools are unavailable. */
 public final class PasswordCredentialChecks {
     public static void main(String[] args) throws Exception { run(); System.out.println("Password credential checks passed"); }
@@ -30,18 +26,8 @@ public final class PasswordCredentialChecks {
         check(!PasswordCredential.verify(phrase, null, null, PasswordCredential.ITERATIONS), "Missing record accepted");
         check(!PasswordCredential.verify(phrase, first.salt, first.digest, 1), "Downgraded iteration count accepted");
 
-        // Fixture uses the exact pre-upgrade PIN derivation, not the new password setup rules.
-        byte[] legacySalt = new byte[32];
-        Arrays.fill(legacySalt, (byte) 0x11);
-        PBEKeySpec spec = new PBEKeySpec("123456".toCharArray(), legacySalt, 120_000, 256);
-        byte[] legacyHash;
-        try { legacyHash = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded(); }
-        finally { spec.clearPassword(); }
-        StringBuilder hex = new StringBuilder();
-        for (byte item : legacyHash) hex.append(String.format(java.util.Locale.ROOT, "%02x", item & 0xff));
-        check(PasswordCredential.verify("123456", "11".repeat(32), hex.toString(), 120_000), "Existing PIN cannot migrate");
-        check(!PasswordCredential.verify("654321", "11".repeat(32), hex.toString(), 120_000), "Wrong legacy PIN accepted");
-        check(PasswordCredential.problem("123456") != null, "Legacy PIN allowed as new password");
+        check(PasswordCredential.problem("123456") != null, "Short numeric password accepted");
+        check(!PasswordCredential.verify(phrase, first.salt, first.digest, 120_000), "Old iteration count accepted");
     }
 
     private static void check(boolean condition, String message) { if (!condition) throw new AssertionError(message); }
