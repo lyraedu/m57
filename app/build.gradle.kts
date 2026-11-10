@@ -16,7 +16,7 @@ android {
         versionCode = 9
         versionName = "0.6.3"
         buildConfigField("String", "SOURCE_REF", "\"$sourceRef\"")
-        buildConfigField("String", "SOURCE_URL", "\"https://github.com/akshay-abraham/m57${if (sourceRef.isEmpty()) "" else "/tree/$sourceRef"}\"")
+        buildConfigField("String", "SOURCE_URL", "\"https://github.com/lyraedu/m57${if (sourceRef.isEmpty()) "" else "/tree/$sourceRef"}\"")
     }
     val releaseStore = providers.environmentVariable("M57_KEYSTORE").orNull
     if (!releaseStore.isNullOrBlank()) signingConfigs.create("distribution") {

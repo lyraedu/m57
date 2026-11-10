@@ -40,7 +40,7 @@ back to a browser. Test standalone launch and query preservation on the phone.
 
 ## Source repository boundary
 
-The administrator can restrict the `akshay-abraham/m57` path on github.com and
+The administrator can restrict the `lyraedu/m57` path on github.com and
 raw.githubusercontent.com in supported browser address fields. This is a URL
 path rule, separate from family-domain lists. Other GitHub repositories remain
 available. A protection pause or authorised 60-second maintenance window permits

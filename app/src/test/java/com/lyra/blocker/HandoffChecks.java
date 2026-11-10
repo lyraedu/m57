@@ -11,10 +11,11 @@ public final class HandoffChecks {
         check(!HandoffPolicy.inScope("https://other-school.test/chat","https://school.test/",null),"Wrong school PWA accepted");
         check(!HandoffPolicy.inScope("https://school.test/chat/%2e%2e/admin","https://school.test/chat/",null),"Ambiguous path accepted");
         check(!HandoffPolicy.inScope("https://school.test/chat","https://school.test/","https://evil.test/"),"Cross-origin scope accepted");
-        check(HandoffPolicy.repositoryAddress("github.com/akshay-abraham/m57/issues"),"Repository guard missed");
-        check(HandoffPolicy.repositoryAddress("https://raw.githubusercontent.com/akshay-abraham/m57/main/README.md"),"Raw repo missed");
-        check(!HandoffPolicy.repositoryAddress("https://github.com/akshay-abraham/m570"),"Other repository blocked");
-        check(!HandoffPolicy.repositoryAddress("https://github.com.evil.test/akshay-abraham/m57"),"Lookalike blocked");
+        check(HandoffPolicy.repositoryAddress("github.com/lyraedu/m57/issues"),"Repository guard missed");
+        check(HandoffPolicy.repositoryAddress("github.com/akshay-abraham/m57/issues"),"Old repository redirect missed");
+        check(HandoffPolicy.repositoryAddress("https://raw.githubusercontent.com/lyraedu/m57/main/README.md"),"Raw repo missed");
+        check(!HandoffPolicy.repositoryAddress("https://github.com/lyraedu/m570"),"Other repository blocked");
+        check(!HandoffPolicy.repositoryAddress("https://github.com.evil.test/lyraedu/m57"),"Lookalike blocked");
         check(!HandoffPolicy.repositoryAddress("https://github.com/another/m57"),"Other owner's repo blocked");
         check("chatgpt".equals(HandoffPolicy.source("chat.openai.com")),"ChatGPT hint missed");
         check("other".equals(HandoffPolicy.source("chatgpt.com.evil.test")),"Lookalike source matched");

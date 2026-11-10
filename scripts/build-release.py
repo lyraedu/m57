@@ -87,7 +87,7 @@ def main():
         shutil.copyfile(apk, binary)
         run(['git', 'archive', '--format=tar.gz', f'--prefix=m57-v{version}/', '-o', str(source), commit])
         (output / 'SIGNING.txt').write_text(certificate + '\n')
-        (output / 'BUILD.txt').write_text(f'M57 {version}\nSource commit: {commit}\nSource: https://github.com/akshay-abraham/m57/tree/{commit}\n')
+        (output / 'BUILD.txt').write_text(f'M57 {version}\nSource commit: {commit}\nSource: https://github.com/lyraedu/m57/tree/{commit}\n')
         for name in ('LICENSE', 'NOTICE', 'LICENSING.md'):
             shutil.copyfile(root / name, output / name)
         shutil.copytree(root / 'LICENSES', output / 'LICENSES', dirs_exist_ok=True)

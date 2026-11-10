@@ -20,7 +20,7 @@ if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
     echo 'Commit source changes before starting a release.' >&2
     exit 1
 fi
-repository='akshay-abraham/m57'
+repository='lyraedu/m57'
 git push origin main
 python3 scripts/upload-signing-secrets.py --repository "$repository"
 gh workflow run prepare-release.yml --repo "$repository" --ref main -f "version=$version"

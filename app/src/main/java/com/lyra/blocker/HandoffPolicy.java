@@ -59,8 +59,10 @@ public final class HandoffPolicy {
             if (uri.getHost() == null || uri.getUserInfo() != null) return false;
             String host = uri.getHost().toLowerCase(Locale.ROOT), path = uri.normalize().getPath().toLowerCase(Locale.ROOT);
             if (!(host.equals("github.com") || host.equals("www.github.com") || host.equals("raw.githubusercontent.com"))) return false;
-            String repo = "/akshay-abraham/m57";
-            return path.equals(repo) || path.equals(repo + ".git") || path.startsWith(repo + "/");
+            for (String repo : new String[]{"/lyraedu/m57", "/akshay-abraham/m57"}) {
+                if (path.equals(repo) || path.equals(repo + ".git") || path.startsWith(repo + "/")) return true;
+            }
+            return false;
         } catch (Exception ignored) { return false; }
     }
 }
