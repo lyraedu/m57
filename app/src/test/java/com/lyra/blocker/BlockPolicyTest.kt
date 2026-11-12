@@ -5,6 +5,13 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BlockPolicyTest {
+    @Test fun `Google AI Mode requires its own header rather than an ordinary search tab`() {
+        assertTrue(BlockPolicy.googleAiMode(listOf(BlockPolicy.Label("${BlockPolicy.google}:id/assistant_title", "AI Mode"))))
+        assertFalse(BlockPolicy.googleAiMode(listOf(BlockPolicy.Label("${BlockPolicy.google}:id/toolbar_title", "AI Mode"))))
+        assertTrue(BlockPolicy.googleAiMode(listOf(BlockPolicy.Label("${BlockPolicy.google}:id/toolbar_title", "AI Mode", selected = true))))
+        assertFalse(BlockPolicy.googleAiMode(listOf(BlockPolicy.Label("search_result", "AI Mode"))))
+        assertFalse(BlockPolicy.googleAiMode(listOf(BlockPolicy.Label("${BlockPolicy.google}:id/assistant_title", "Search AI Mode tips"))))
+    }
     @Test fun `major AI apps are blocked but general purpose apps are not`() {
         assertEquals("ChatGPT", BlockPolicy.apps["com.openai.chatgpt"])
         assertEquals("Gemini", BlockPolicy.apps["com.google.android.apps.bard"])
