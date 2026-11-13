@@ -77,7 +77,7 @@ class ProtectionStore(context: Context) {
         get() = prefs.getBoolean("repo_guard", true)
         set(value) { prefs.edit().putBoolean("repo_guard", value).apply() }
     var destination: String
-        get() = prefs.getString("destination", "https://lyra-edu.vercel.app/chat")!!
+        get() = prefs.getString("destination", HandoffPolicy.DEFAULT_DESTINATION)!!
         set(value) { require(BlockPolicy.validDestination(value)); prefs.edit().putString("destination", value).apply() }
     var pwaPackage: String
         get() = prefs.getString("pwa_package", "")!!

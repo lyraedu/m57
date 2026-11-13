@@ -8,7 +8,7 @@ import android.net.Uri
 import android.content.pm.PackageManager
 
 object LyraLauncher {
-    data class InstalledPwa(val packageName: String, val label: String)
+    data class InstalledPwa(val packageName: String, val label: String, val destination: String)
 
     fun installedPwas(context: Context, destination: String): List<InstalledPwa> {
         if (!BlockPolicy.validDestination(destination)) return emptyList()
@@ -18,15 +18,16 @@ object LyraLauncher {
         return (pm.queryIntentActivities(view, 0) + pm.queryIntentActivities(launcher, 0))
             .filter { it.activityInfo.packageName.startsWith("org.chromium.webapk.") }
             .distinctBy { it.activityInfo.packageName }
-            .filter { result ->
+            .mapNotNull { result ->
                 runCatching {
                     val metadata = pm.getApplicationInfo(result.activityInfo.packageName, PackageManager.GET_META_DATA).metaData
-                    HandoffPolicy.inScope(destination,
+                    val target = HandoffPolicy.pwaDestination(destination,
                         metadata?.getString("org.chromium.webapk.shell_apk.startUrl").orEmpty(),
-                        metadata?.getString("org.chromium.webapk.shell_apk.scope"))
-                }.getOrDefault(false)
-            }
-            .map { InstalledPwa(it.activityInfo.packageName, it.loadLabel(pm).toString()) }
+                        metadata?.getString("org.chromium.webapk.shell_apk.scope")) ?: return@runCatching null
+                    InstalledPwa(result.activityInfo.packageName, result.loadLabel(pm).toString(), target)
+                }.getOrNull()
+            }.sortedWith(compareBy<InstalledPwa> { if (Uri.parse(it.destination).host.equals(Uri.parse(destination).host, true)) 0 else 1 }
+                .thenBy { it.packageName })
     }
 
     fun openInChrome(context: Context, destination: String): Boolean {
@@ -58,25 +59,26 @@ object LyraLauncher {
             addCategory(Intent.CATEGORY_BROWSABLE)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        val pwas = installedPwas(context, store.destination).map { it.packageName }
-        val candidates = listOfNotNull(store.pwaPackage.takeIf { it in pwas }) + pwas + "com.android.chrome"
-        for (packageName in candidates.distinct()) {
+        val pwas = installedPwas(context, store.destination)
+        val ordered = pwas.sortedBy { if (it.packageName == store.pwaPackage) 0 else 1 }
+        for (pwa in ordered) {
+            val target = destination.buildUpon().scheme("https").authority(Uri.parse(pwa.destination).authority).build()
             try {
-                context.startActivity(Intent(base).apply { setPackage(packageName) })
+                context.startActivity(Intent(base).setData(target).setPackage(pwa.packageName))
                 return true
             } catch (_: ActivityNotFoundException) {
-                // Older WebAPKs may expose only their launcher activity. Scope was verified above.
-                if (packageName in pwas) {
-                    val launch = context.packageManager.getLaunchIntentForPackage(packageName)
-                    if (launch != null) try {
-                        context.startActivity(launch.apply { data = destination; addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
-                        return true
-                    } catch (_: ActivityNotFoundException) { } catch (_: SecurityException) { }
-                }
-            } catch (_: SecurityException) {
-                // Installed handler can be disabled or restricted by device policy.
-            }
+                // Launcher-only WebAPKs still receive the scoped target as intent data.
+                val launch = context.packageManager.getLaunchIntentForPackage(pwa.packageName)
+                if (launch != null) try {
+                    context.startActivity(launch.apply { data = target; addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+                    return true
+                } catch (_: ActivityNotFoundException) { } catch (_: SecurityException) { }
+            } catch (_: SecurityException) { }
         }
+        try {
+            context.startActivity(Intent(base).setPackage("com.android.chrome"))
+            return true
+        } catch (_: ActivityNotFoundException) { } catch (_: SecurityException) { }
         // A device without Chrome can still have another browser.
         return try { context.startActivity(base); true }
         catch (_: ActivityNotFoundException) { false }

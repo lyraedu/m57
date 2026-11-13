@@ -8,6 +8,23 @@ import java.util.Map;
 /** Pure URL policy shared by WebAPK discovery, source hints and the repo guard. */
 public final class HandoffPolicy {
     private HandoffPolicy() {}
+    public static final String DEFAULT_DESTINATION = "https://lyra-dev.vercel.app/chat";
+    private static final java.util.regex.Pattern LYRA_HOST = java.util.regex.Pattern.compile("^(?:lyra-dev\\.vercel\\.app|lyraedu\\.app)$", java.util.regex.Pattern.CASE_INSENSITIVE);
+    public static boolean officialLyra(String address) {
+        try { return LYRA_HOST.matcher(https(address).getHost()).matches(); }
+        catch (Exception ignored) { return false; }
+    }
+    /** Two explicitly trusted deployment origins may select the installed app's own origin. */
+    public static String pwaDestination(String configured, String startUrl, String scope) {
+        if (inScope(configured, startUrl, scope)) return configured;
+        if (!officialLyra(configured) || !officialLyra(startUrl)) return null;
+        try {
+            URI target = https(configured), start = https(startUrl);
+            String candidate = "https://" + start.getHost() + (target.getRawPath().isEmpty() ? "/" : target.getRawPath())
+                + (target.getRawQuery() == null ? "" : "?" + target.getRawQuery());
+            return inScope(candidate, startUrl, scope) ? candidate : null;
+        } catch (Exception ignored) { return null; }
+    }
     private static final Map<String,String> SOURCES = Map.ofEntries(
         Map.entry("chatgpt", "chatgpt"), Map.entry("chatgpt.com", "chatgpt"), Map.entry("chat.openai.com", "chatgpt"),
         Map.entry("gemini", "gemini"), Map.entry("gemini.google.com", "gemini"),

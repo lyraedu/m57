@@ -424,24 +424,21 @@ class MainActivity : Activity() {
             Motion.reveal(advanced)
         }.apply { gravity = Gravity.START })
         page.addView(advanced)
-        val webapk = input(advanced, "PWA package (optional; blank = automatic)", store.pwaPackage)
-        advanced.addView(LyraUi.button(this, "Find installed Lyra PWA", false) { findInstalledPwa(url.text.toString().trim(), webapk) })
+        advanced.addView(LyraUi.feature(this, "↗", "Your installed Lyra app, automatically", "M57 checks the installed app’s trusted web address and scope. Both lyra-dev.vercel.app and lyraedu.app are supported. No package selection is needed."))
         advanced.addView(LyraUi.link(this, "How to install and find the PWA") { showPwaGuide() })
         val extras = input(advanced, "Extra AI package IDs (one per line)", store.extraPackages.joinToString("\n"), InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
         advanced.addView(LyraUi.text(this, "Included apps: ${BlockPolicy.apps.values.distinct().joinToString(", ")}", 12f, LyraUi.muted))
         page.addView(LyraUi.button(this, "Save AI settings") {
             if (!unlocked) return@button
             val address = url.text.toString().trim()
-            val pwa = webapk.text.toString().trim()
             val countdown = seconds.text.toString().toIntOrNull()
             val packages = extras.text.toString().lines().map(String::trim).filter(String::isNotEmpty).toSet()
             when {
                 !BlockPolicy.validDestination(address) -> url.error = "Enter an HTTPS address without credentials or a fragment."
-                pwa.isNotEmpty() && !BlockPolicy.validPackage(pwa) -> webapk.error = "Enter an Android package ID."
                 countdown == null || countdown !in 3..15 -> seconds.error = "Choose 3–15 seconds."
-                packages.size > 500 || !packages.all(BlockPolicy::validPackage) || packageName in packages || packages.any { it in com.lyra.blocker.family.BrowserDomains.BROWSERS } || pwa in packages -> extras.error = "Use at most 500 package IDs; keep M57, its PWA and browsers unblocked."
+                packages.size > 500 || !packages.all(BlockPolicy::validPackage) || packageName in packages || packages.any { it in com.lyra.blocker.family.BrowserDomains.BROWSERS } -> extras.error = "Use at most 500 package IDs; keep M57, its PWA and browsers unblocked."
                 else -> {
-                    store.destination = address; store.pwaPackage = pwa
+                    store.destination = address; store.pwaPackage = ""
                     store.countdown = countdown; store.extraPackages = packages
                     toast("AI settings saved.")
                 }
@@ -726,23 +723,12 @@ class MainActivity : Activity() {
     private fun showPwaGuide(notFound: Boolean = false, destination: String = store.destination) {
         val message = (if (notFound) "No matching installed Lyra PWA was found.\n\n" else "") +
             "1. Open $destination in Chrome.\n\n2. Use Chrome's menu to install Lyra as an app.\n\n" +
-            "3. Return to M57 → Administrator access → Controls → AI redirection → PWA and advanced app rules.\n\n" +
-            "4. Select Find installed Lyra PWA, choose Lyra and save the AI settings.\n\n5. Use Open Lyra to test. Chrome is the fallback if discovery fails."
+            "3. Return to M57 and choose Open Lyra. M57 automatically finds a matching installed web app.\n\n" +
+            "Both lyra-dev.vercel.app and lyraedu.app are supported. A browser opens if no trusted installed app matches."
         dialog = AlertDialog.Builder(this).setTitle("Find your Lyra PWA").setMessage(message)
             .setNegativeButton("Close", null).setPositiveButton("Open in Chrome") { _, _ ->
                 if (!LyraLauncher.openInChrome(this, destination)) toast("Install or enable Google Chrome first.")
             }.show().also(LyraUi::styleDialog)
-    }
-    private fun findInstalledPwa(destination: String, field: EditText) {
-        if (!unlocked) return
-        if (!BlockPolicy.validDestination(destination)) { toast("Enter a valid Lyra HTTPS address first."); return }
-        val installed = LyraLauncher.installedPwas(this, destination)
-        if (installed.isEmpty()) { showPwaGuide(true, destination); return }
-        val names = installed.map { "${it.label}\n${it.packageName}" } + "Use automatic detection"
-        dialog = AlertDialog.Builder(this).setTitle("Choose the installed Lyra PWA")
-            .setItems(names.toTypedArray()) { _, index ->
-                if (unlocked) { field.setText(installed.getOrNull(index)?.packageName.orEmpty()); toast("PWA selected. Save AI settings to apply it.") }
-            }.setNegativeButton("Cancel", null).show().also(LyraUi::styleDialog)
     }
     private fun confirm(title: String, message: String, action: () -> Unit) {
         if (!unlocked) return

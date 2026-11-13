@@ -4,6 +4,14 @@ package com.lyra.blocker;
 public final class HandoffChecks {
     public static void main(String[]args){run();System.out.println("PWA scope, source hint and repository boundary checks passed");}
     public static void run(){
+        check(HandoffPolicy.officialLyra("https://lyraedu.app/chat"), "Custom deployment missed");
+        check(HandoffPolicy.officialLyra("https://lyra-dev.vercel.app/"), "Preview deployment missed");
+        check(!HandoffPolicy.officialLyra("https://lyraedu.app.evil.test/chat"), "Lookalike deployment accepted");
+        check(!HandoffPolicy.officialLyra("https://lyraedu.app@evil.test/chat"), "Credential URL accepted");
+        check(!HandoffPolicy.officialLyra("http://lyraedu.app/chat"), "Unencrypted deployment accepted");
+        check("https://lyraedu.app/chat?mode=learn".equals(HandoffPolicy.pwaDestination("https://lyra-dev.vercel.app/chat?mode=learn", "https://lyraedu.app/", "https://lyraedu.app/")), "Installed alias app was not selected");
+        check(HandoffPolicy.pwaDestination("https://lyra-dev.vercel.app/chat", "https://lyraedu.app/other/", "https://lyraedu.app/other/") == null, "Alias escaped PWA scope");
+        check(HandoffPolicy.pwaDestination("https://school.test/chat", "https://lyraedu.app/", "https://lyraedu.app/") == null, "Custom destination switched origins");
         check(HandoffPolicy.inScope("https://school.test/chat?m57_intent=new","https://school.test/", "https://school.test/"),"Root PWA missed");
         check(HandoffPolicy.inScope("https://school.test:443/chat/new","https://school.test/chat/","https://school.test/chat"),"HTTPS default port mismatch");
         check(HandoffPolicy.inScope("https://school.test","https://school.test/",null),"Empty path root missed");
