@@ -49,13 +49,14 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
         }
     }
     private fun title(root: LinearLayout, text: String, detail: String) {
-        root.addView(LyraUi.text(activity, text, 32f, bold = true)); root.addView(LyraUi.text(activity, detail, 15f, LyraUi.muted))
+        root.addView(LyraUi.text(activity, text, 32f, bold = true).apply { isAccessibilityHeading = true }); root.addView(LyraUi.text(activity, detail, 15f, LyraUi.muted))
     }
     private fun card(root: LinearLayout, symbol: String, title: String, detail: String, action: () -> Unit) {
         root.addView(LyraUi.routeCard(activity, symbol, title, detail, action))
     }
     private fun home(root: LinearLayout) {
         val active = focus.session
+        val todayFocused = focus.todayFocused
         root.addView(LyraUi.badge(activity, if (active != null) "TIME YOU CHOSE" else "YOUR ATTENTION BELONGS TO YOU"))
         title(root, if (store.familyManaged) "A calmer phone.\nA clearer day." else "Room for\nwhat matters.",
             if (store.familyManaged) "Check the boundaries on this phone. Parent controls are one password away." else "Focus time, fewer endless videos, and boundaries you choose.")
@@ -64,11 +65,17 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
             protectionSummary(root)
             root.addView(LyraUi.button(activity, "Parent controls") { admin(AdminPage.OVERVIEW) })
         }
-        val art = FocusArt(activity).apply { progress = focus.todayFocused.toFloat() / (focus.goalMinutes * 60_000f) }
+        if (active != null) card(root, "◷", "Your session is under way", "${active.title} · return to your timer") { show("Focus") }
+        else root.addView(LyraUi.button(activity, "Start a focus session") { show("Focus") })
+        root.addView(LyraUi.section(activity, "A little space, today", "Small moments add up.", green = true))
+        root.addView(SummaryTiles(activity, listOf(
+            SummaryMetric("Time for yourself", "${todayFocused / 60_000} min", "Focused today", M57Icon.FOCUS),
+            SummaryMetric("Your daily direction", "${focus.goalMinutes} min", "A goal, without pressure", M57Icon.PLAN, true)
+        )))
+        val art = FocusArt(activity).apply { progress = todayFocused.toFloat() / (focus.goalMinutes * 60_000f) }
         if (!Illustrations.addTo(root, "attention-garden", 230)) root.addView(art, LinearLayout.LayoutParams(-1, LyraUi.dp(activity, 230)))
-        root.addView(LyraUi.text(activity, "${focus.todayFocused / 60_000} / ${focus.goalMinutes} minutes for yourself today", 15f, bold = true).apply { gravity = Gravity.CENTER })
-        root.addView(LyraUi.button(activity, if (active == null) "Start a focus session" else "Return to ${active.title}") { show("Focus") })
         if (!store.familyManaged) protectionSummary(root)
+        root.addView(LyraUi.section(activity, "Choose what helps", "Each boundary has its own controls."))
         card(root, "Ⅱ", "Break the scroll", "Short-video controls with a blocking or reminder choice.") { admin(AdminPage.SHORT_VIDEOS) }
         card(root, "◎", "Make a plan", "Choose focus apps, daily limits and recurring routines.") { show("Plan") }
         card(root, "◇", "Browse with boundaries", "Choose local website categories and domain exceptions.") { admin(AdminPage.FAMILY) }
@@ -99,9 +106,10 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
             }, 18f, bold = true))
             addView(LyraUi.text(activity, "Short videos · ${readiness(enabledVideos.isNotEmpty() || store.extraVideosEnabled)}${if (enabledVideos.isNotEmpty()) " · ${enabledVideos.joinToString(" / ")}" else ""}", 14f))
             val websites = when {
-                family.enabled.isEmpty() && family.block.isEmpty() -> "Not set up"
+                !family.vpnConfigured && family.blockedUrls.isEmpty() -> "Not set up"
                 store.paused -> "Paused"
-                rules.index.size() == 0 -> "Waiting for website lists"
+                family.resolverMode != com.lyra.blocker.family.ResolverPolicy.NETWORK && com.lyra.blocker.family.FamilyVpnService.running -> "DNS provider active · browser rules separate"
+                rules.index.size() == 0 && family.blockedUrls.isEmpty() -> "Waiting for website lists or VPN setup"
                 com.lyra.blocker.family.FamilyVpnService.running || (family.browserEnabled && connected) -> "On for configured websites"
                 else -> "Needs setup"
             }
@@ -126,9 +134,21 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
     }
     private fun running(root: LinearLayout, session: FocusSession) {
         title(root, session.title, if (session.strict) "A commitment you made to yourself." else "Stay with one thing. You can finish early if you need to.")
-        val art = FocusArt(activity); root.addView(art, LinearLayout.LayoutParams(-1, LyraUi.dp(activity, 200)))
+        val art = FocusArt(activity).apply { showMark = false }
+        root.addView(android.widget.FrameLayout(activity).apply {
+            addView(art, android.widget.FrameLayout.LayoutParams(-1, -1))
+            addView(android.widget.ImageView(activity).apply {
+                setImageResource(R.drawable.m57_logo); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            }, android.widget.FrameLayout.LayoutParams(LyraUi.dp(activity, 88), LyraUi.dp(activity, 88), Gravity.CENTER))
+        }, LinearLayout.LayoutParams(-1, LyraUi.dp(activity, 240)))
+        root.addView(LyraUi.text(activity, if (session.kind == "stopwatch") "TIME YOU’VE MADE" else "TIME LEFT IN THIS ROUND", 11f, LyraUi.muted, true).apply { gravity = Gravity.CENTER })
         val clock = LyraUi.text(activity, "", 52f, bold = true).apply { gravity = Gravity.CENTER }; root.addView(clock)
-        val phase = LyraUi.text(activity, "", 17f, LyraUi.orange, true).apply { gravity = Gravity.CENTER; accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE }; root.addView(phase)
+        val phase = LyraUi.text(activity, "", 17f, LyraUi.actionOrange, true).apply {
+            gravity = Gravity.CENTER; accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+            setPadding(LyraUi.dp(activity, 14), LyraUi.dp(activity, 14), LyraUi.dp(activity, 14), LyraUi.dp(activity, 14))
+        }; root.addView(phase)
+        val rounds = FocusRounds(activity, session.rounds)
+        if (session.kind == "pomodoro") root.addView(rounds, LinearLayout.LayoutParams(-1, LyraUi.dp(activity, 24)))
         val detail = LyraUi.text(activity, "", 14f, LyraUi.muted).apply { gravity = Gravity.CENTER }; root.addView(detail)
         val tick = object : Runnable {
             override fun run() {
@@ -137,12 +157,24 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
                 val value = if (session.kind == "stopwatch") state.focused() else state.remaining()
                 clock.text = formatTime(value)
                 val next = if (state.phase() == "break") "Take a breath · break ${state.round()}" else if (session.kind == "pomodoro") "Focus · round ${state.round()} of ${session.rounds}" else "Your focus time"
-                if (phase.text.toString() != next) phase.text = next
+                val resting = state.phase() == "break"
+                if (phase.text.toString() != next) {
+                    phase.text = next
+                    phase.setTextColor(if (resting) LyraUi.mossInk else LyraUi.actionOrange)
+                    phase.background = LyraUi.shape(if (resting) LyraUi.mossSoft else LyraUi.apricotSoft, LyraUi.dp(activity, 18).toFloat())
+                    Motion.enter(phase)
+                }
+                art.resting = resting; rounds.update(state.round(), resting)
                 detail.text = "${state.focused() / 60_000} minutes focused${if (store.paused) " · administrator protection paused" else ""}"
                 art.progress = if (session.kind == "stopwatch") 0.7f else (state.remaining().toFloat() / (if (state.phase() == "break") session.rest else session.focus)).coerceIn(0f, 1f)
                 handler.postDelayed(this, 1000)
             }
         }; handler.post(tick)
+        root.addView(LyraUi.section(activity, "Let the rest wait", "A quieter phone, while you’re here.", green = true))
+        root.addView(SummaryTiles(activity, listOf(
+            SummaryMetric("Focus list", "${focus.blockedApps.size} apps", "Chosen in your plan", M57Icon.FOCUS),
+            SummaryMetric("Website boundaries", "${focus.blockedSites.size} sites", if (focus.studyBrowser) "Study allowlist also active" else "Supported browser addresses", M57Icon.BROWSER, true)
+        )))
         root.addView(LyraUi.text(activity, if (session.kind == "pomodoro") "Your chosen apps return during each scheduled break. Family browsing and short-video settings keep their own rules." else "Your chosen focus apps and sites return when this session ends.", 15f, LyraUi.muted))
         if (!session.strict) root.addView(LyraUi.button(activity, "Finish session", false) {
             confirm("Finish this session?", "Save the time you focused and release this session's focus list. Other protection stays active.") { if (focus.finish(manual = true)) show("Insights") }
@@ -152,10 +184,13 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
     private fun plan(root: LinearLayout) {
         title(root, "Fewer decisions.\nMore intention.", "Set boundaries once, then let your day unfold.")
         Illustrations.addTo(root, "routine-rhythm", 180)
+        root.addView(LyraUi.section(activity, "Your boundaries", "Choose the distractions you want a hand with."))
         card(root, "◎", "Focus list", "${focus.blockedApps.size} apps · ${focus.blockedSites.size} websites · ${if (focus.studyBrowser) "study allowlist on" else "study allowlist off"}") { admin(AdminPage.FOCUS_RULES) }
         card(root, "◷", "Daily app limits", "${AppLimitStore(activity).limits.size} chosen apps. Reset at local midnight.") { admin(AdminPage.APP_LIMITS) }
         card(root, "▦", "Routines", "${focus.routines.count { it.enabled }} enabled. Repeat on the days you choose.") { admin(AdminPage.ROUTINES) }
+        root.addView(LyraUi.section(activity, "Your rhythm", "Make a little room each day.", green = true))
         root.addView(LyraUi.card(activity).apply {
+            background = LyraUi.shape(LyraUi.mossSoft, LyraUi.dp(activity, 24).toFloat())
             addView(LyraUi.text(activity, "A daily focus goal", 21f, bold = true))
             addView(LyraUi.text(activity, "A direction for your day, without streaks or penalties.", 14f, LyraUi.muted))
             val goal = field(this, "Goal minutes · 5–480", focus.goalMinutes.toString(), true)
@@ -181,7 +216,7 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
                 contentDescription = "$minutes of ${focus.goalMinutes} goal minutes"
             })
         })
-        root.addView(LyraUi.text(activity, "The past seven days", 20f, bold = true))
+        root.addView(LyraUi.section(activity, "The past seven days", "Focus time, without scores or streaks.", green = true))
         val today = LocalDate.now()
         (6 downTo 0).forEach { offset ->
             val day = today.minusDays(offset.toLong())
@@ -191,11 +226,11 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
             row.addView(ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal).apply { max = focus.goalMinutes; progress = total.toInt().coerceAtMost(max); progressTintList = android.content.res.ColorStateList.valueOf(LyraUi.orange) }, LinearLayout.LayoutParams(0, LyraUi.dp(activity, 24), 1f))
             row.addView(LyraUi.text(activity, "  $total m", 12f), LinearLayout.LayoutParams(LyraUi.dp(activity, 60), -2)); root.addView(row)
         }
-        root.addView(LyraUi.text(activity, "Recent sessions", 20f, bold = true))
+        root.addView(LyraUi.section(activity, "Recent sessions", "A record of the time you chose."))
         if (history.isEmpty()) root.addView(LyraUi.text(activity, "Your first session starts the story. No scores, no pressure.", 15f, LyraUi.muted))
         history.take(12).forEach { record -> root.addView(LyraUi.feature(activity, if (record.completed) "✓" else "◷", record.title,
             "${record.focused / 60_000} minutes · ${if (record.completed) "completed" else "ended"} · ${DateTimeFormatter.ofPattern("MMM d, HH:mm").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(record.ended))}")) }
-        root.addView(LyraUi.text(activity, "App use today", 20f, bold = true))
+        root.addView(LyraUi.section(activity, "App use today", "Optional estimates from Android. Kept here.", green = true))
         if (!focus.usageEnabled || !UsageAccess.granted(activity)) {
             root.addView(LyraUi.text(activity, "App-use insights are optional. Android usage access provides app identities and time estimates. M57 processes them locally and does not upload or keep event logs.", 14f, LyraUi.muted))
             root.addView(LyraUi.button(activity, "Review usage access", false) { admin(AdminPage.APP_LIMITS) })

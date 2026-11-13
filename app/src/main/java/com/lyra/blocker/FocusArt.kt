@@ -19,6 +19,14 @@ class FocusArt @JvmOverloads constructor(context: Context, private val scene: Sc
     private val wordFace = android.graphics.Typeface.create(context.resources.getFont(R.font.sora), 600, false)
     private val oval = RectF()
     private var animator: ValueAnimator? = null
+    private val accessibility = context.getSystemService(android.view.accessibility.AccessibilityManager::class.java)
+    private val touchListener = android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener { animation() }
+    private val powerListener = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: android.content.Intent?) { animation() }
+    }
+    private val scaleObserver = object : android.database.ContentObserver(android.os.Handler(android.os.Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) { animation() }
+    }
     private var phase = 0f
     var showMark = true
     var resting = false
@@ -34,10 +42,22 @@ class FocusArt @JvmOverloads constructor(context: Context, private val scene: Sc
             addUpdateListener { phase = it.animatedValue as Float; invalidate() }; start()
         }
     }
-    override fun onAttachedToWindow() { super.onAttachedToWindow(); animation() }
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        context.registerReceiver(powerListener, android.content.IntentFilter(android.os.PowerManager.ACTION_POWER_SAVE_MODE_CHANGED), Context.RECEIVER_NOT_EXPORTED)
+        context.contentResolver.registerContentObserver(android.provider.Settings.Global.getUriFor(android.provider.Settings.Global.ANIMATOR_DURATION_SCALE), false, scaleObserver)
+        accessibility.addTouchExplorationStateChangeListener(touchListener)
+        animation()
+    }
     override fun onWindowVisibilityChanged(visibility: Int) { super.onWindowVisibilityChanged(visibility); animation() }
     override fun onVisibilityChanged(changedView: View, visibility: Int) { super.onVisibilityChanged(changedView, visibility); animation() }
-    override fun onDetachedFromWindow() { animator?.cancel(); animator = null; animate().cancel(); super.onDetachedFromWindow() }
+    override fun onDetachedFromWindow() {
+        animator?.cancel(); animator = null; animate().cancel()
+        context.unregisterReceiver(powerListener)
+        context.contentResolver.unregisterContentObserver(scaleObserver)
+        accessibility.removeTouchExplorationStateChangeListener(touchListener)
+        super.onDetachedFromWindow()
+    }
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (width == 0 || height == 0) return
