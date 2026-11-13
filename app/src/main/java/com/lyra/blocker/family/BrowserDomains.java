@@ -23,12 +23,14 @@ public final class BrowserDomains {
         BROWSERS = java.util.Collections.unmodifiableMap(next);
     }
     public static String host(String packageName, String resourceId, String text) {
+        return trustedField(packageName, resourceId) ? HostRules.address(text) : null;
+    }
+    public static boolean trustedField(String packageName, String resourceId) {
         Set<String> names = BROWSERS.get(packageName);
-        if (names == null || resourceId == null) return null;
+        if (names == null || resourceId == null) return false;
         boolean trusted = resourceId.startsWith(packageName + ":id/") ||
             (resourceId.equals("ADDRESSBAR_URL_BOX") && names.contains("ADDRESSBAR_URL_BOX")) ||
             (Set.of("com.chrome.beta", "com.chrome.dev").contains(packageName) && resourceId.startsWith("com.android.chrome:id/"));
-        if (!trusted || !names.contains(resourceId.substring(resourceId.lastIndexOf('/') + 1))) return null;
-        return HostRules.address(text);
+        return trusted && names.contains(resourceId.substring(resourceId.lastIndexOf('/') + 1));
     }
 }

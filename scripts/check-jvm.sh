@@ -9,6 +9,7 @@ trap 'rm -rf "$check_dir"' EXIT HUP INT TERM
 if command -v javac >/dev/null 2>&1; then
     javac --release 17 -d "$check_dir" \
         app/src/main/java/com/lyra/blocker/FocusClock.java \
+        app/src/main/java/com/lyra/blocker/VpnAppPolicy.java \
         app/src/main/java/com/lyra/blocker/GoogleAiPolicy.java \
         app/src/main/java/com/lyra/blocker/FocusPolicy.java \
         app/src/main/java/com/lyra/blocker/RoutinePolicy.java \
@@ -25,6 +26,7 @@ else
     # Some stripped runtimes retain jdk.compiler without the javac executable/ct.sym.
     java -m jdk.compiler/com.sun.tools.javac.Main -source 17 -target 17 -d "$check_dir" \
         app/src/main/java/com/lyra/blocker/FocusClock.java \
+        app/src/main/java/com/lyra/blocker/VpnAppPolicy.java \
         app/src/main/java/com/lyra/blocker/GoogleAiPolicy.java \
         app/src/main/java/com/lyra/blocker/FocusPolicy.java \
         app/src/main/java/com/lyra/blocker/RoutinePolicy.java \
@@ -39,7 +41,7 @@ else
         app/src/test/java/com/lyra/blocker/*Checks.java
 fi
 
-for suite in FocusChecks PasswordCredentialChecks ProtectionTimingChecks BackgroundHelpChecks AccessibilitySettingsChecks FamilyRuleChecks DnsPacketChecks MediaMetaChecks HandoffChecks; do
+for suite in FocusChecks NetworkPolicyChecks PasswordCredentialChecks ProtectionTimingChecks BackgroundHelpChecks AccessibilitySettingsChecks FamilyRuleChecks DnsPacketChecks MediaMetaChecks HandoffChecks; do
     if [ "$suite" = FamilyRuleChecks ] && [ "$#" -gt 0 ]; then
         java -cp "$check_dir" "com.lyra.blocker.$suite" "$1"
     else
