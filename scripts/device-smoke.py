@@ -57,7 +57,7 @@ class PreviewDevice:
             root = self.tree()
             for node in root.iter('node'):
                 labels = [node.get('text', ''), node.get('content-desc', '')]
-                if any(text in label if partial else label == text for label in labels) and node.get('package') == PACKAGE:
+                if any(text.casefold() in label.casefold() if partial else label.casefold() == text.casefold() for label in labels) and node.get('package') == PACKAGE:
                     return node
             if scroll:
                 bounds = root.find('node').get('bounds', '[0,0][720,1600]')

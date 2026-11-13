@@ -171,6 +171,9 @@ object LyraUi {
     }
     fun styleDialog(dialog: AlertDialog) {
         dialog.window?.setBackgroundDrawable(shape(background, dp(dialog.context, 24).toFloat()))
+        listOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL).forEach {
+            dialog.getButton(it)?.isAllCaps = false
+        }
         dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(actionOrange)
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(muted)
     }

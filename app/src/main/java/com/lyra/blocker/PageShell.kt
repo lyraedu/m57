@@ -28,6 +28,8 @@ class PageShell @JvmOverloads constructor(activity: Context, tab: AdminTab? = nu
     init {
         background = GradientDrawable(GradientDrawable.Orientation.TL_BR,
             intArrayOf(LyraUi.background, Color.rgb(255, 247, 240), Color.rgb(247, 242, 235)))
+        content.isFocusableInTouchMode = true
+        content.requestFocus()
         content.addView(LyraUi.brand(activity))
         scroll.isVerticalScrollBarEnabled = false
         scroll.isFillViewport = true
