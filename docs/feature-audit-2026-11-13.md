@@ -171,3 +171,17 @@ phone and opened after the update. `scripts/preview-on-device.sh` now provides
 that sequence, preserving data/permissions and refusing the production package.
 Phone use is announced before it starts; it never unlocks the phone or grants
 permissions on the user's behalf.
+
+## Current build request and retained scope
+
+The owner requested a current secure Preview APK and explicitly deferred online
+recovery only. The [wellbeing tools continuation](wellbeing-tools.md) retains the
+expanded features, compatible-source review, UI/ambient-motion work, detailed
+permission/free-software onboarding, phone-use notifications and full Strict
+protocol requirements. A snapshot APK is not completion of that backlog.
+
+New source now has personal permission stories and the parent access guide,
+free-software education, ambient artwork, live passphrase guidance, protected
+password windows, explicit authority validation and surfaced onboarding save
+failures. Privacy copy discloses optional network flows rather than claiming no
+Internet access. Usage-summary notifications remain an implementation task.

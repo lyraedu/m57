@@ -2,7 +2,7 @@
 
 M57 has five personal destinations: Home, Focus, Plan, Insights and Settings.
 New installations choose personal or family authority during a resumable,
-six-step introduction. Lyra redirection is an optional switch, off by default
+persona-specific illustrated introduction and permission guide. Lyra redirection is an optional switch, off by default
 for new installations. Existing password installations retain family authority,
 credentials, pauses, permissions and all existing rule selections.
 

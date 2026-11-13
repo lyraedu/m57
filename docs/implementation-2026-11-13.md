@@ -111,3 +111,46 @@ to power, system animation and touch-exploration changes while attached.
 The [component record](ui-components.md) describes the supplied-code license
 boundary and original native implementations. New phone visual/password-flow
 acceptance remains distinct from the successful install/launch.
+
+## Announced ten-minute phone review
+
+Samsung SM-M135FU / Android14, 13 November, approximately 06:14–06:24 IST.
+New personal setup completed with Lyra off and accessibility declined; Home,
+mode selection and running Focus were inspected as real rendered screens.
+Stopwatch hid the complete duration input group. A normal session started and
+finished through its confirmation. The walkthrough originally expected title
+case for the native dialog's uppercase CONTINUE; the helper now handles case
+and shared dialogs use consistent sentence case.
+
+A second observed issue was automatic EditText focus scrolling Focus away from
+its header. Entry focus was corrected and the installed update was checked: the
+page now starts at its header. The latest successful build/install/open artifact
+is `3b3fc2ef16963b46df6d412f6aecde51398e8ab11d1497260b6a123c3896438f`.
+Production package identity stayed unchanged. No Android permission was granted
+and no production data was cleared. The walkthrough created a short local
+Preview session record.
+
+The installed Lyra WebAPK declares `https://lyra-dev.vercel.app/chat` and root
+scope. It was launched from M57 without package selection and appeared through
+Chrome's SameTaskWebApkActivity, with the installed WebAPK task present. The
+initial test checked foreground package too soon and did not account for that
+host activity; this was a test expectation failure, not proof of failed launch.
+AI redirection was restored to off afterwards. Both supported origins now have
+anchored HTTPS/host/scope matching and alias-boundary policy tests. Local public
+checks returned HTTP200 for lyra-dev.vercel.app; lyraedu.app was unreachable from
+this machine. Domain availability is separate from matching support.
+
+The actual Samsung App info tree exposed entity_header_title=M57 Preview and
+button1/2/3=Open/Uninstall/Force stop, matching the current scoped detector.
+Accessibility was off, so this does not establish live interception, uninstall
+prevention or other-OEM coverage. Device-shaped positive and nearby negative
+cases were added without removing the existing policy tests.
+
+A debug walkthrough sample reported 462 frames, 41 janky frames, p50 27ms, p95
+53ms and about 59,432 KiB PSS. These are uncontrolled debug observations, not a
+release benchmark or an accepted performance target. Further profiling is needed.
+
+The phone was left open on Preview Home before the announced window ended.
+Screen interaction is paused for the owner's following three-hour unavailability.
+Subsequent native code and build checks can continue; new Preview installation
+waits for the next available phone window.

@@ -40,7 +40,10 @@ class PreviewDevice:
         self.own_window()
         self.shell('uiautomator', 'dump', '--compressed', '/sdcard/m57-preview-window.xml')
         data = self.shell('cat', '/sdcard/m57-preview-window.xml')
-        return ET.fromstring(data)
+        root = ET.fromstring(data)
+        if not any(node.get('package') == PACKAGE for node in root.iter('node')):
+            raise RuntimeError('Preview is not visibly present; refusing interaction with another app or the lock screen')
+        return root
 
     def screenshot(self, name: str) -> None:
         # Check the actual accessibility tree too: focus alone may precede drawing.
@@ -94,8 +97,13 @@ class PreviewDevice:
         self.tap('Continue')
         self.screenshot('04-video-choice')
         self.tap('Continue')
-        self.screenshot('05-permission-explanation')
-        self.tap('Continue with timer only')
+        self.find('Yours to use.', partial=True)
+        self.screenshot('05-free-and-open')
+        self.tap('Continue')
+        for name in ['accessibility', 'usage', 'background', 'notifications']:
+            self.screenshot('permission-' + name)
+            labels = [n.get('text', '').casefold() for n in self.tree().iter('node') if n.get('package') == PACKAGE]
+            self.tap('Not now · continue' if 'not now · continue' in labels else 'Continue')
         self.screenshot('06-ready')
         self.tap('Start using M57')
         self.find('Start a focus session')
@@ -133,7 +141,6 @@ class PreviewDevice:
         self.tap('Continue')
         self.find('Keep the controls', partial=True)
         self.screenshot('13-parent-password-explanation')
-        self.tap('Continue')
         self.tap('Create parent password')
         self.find('Keep the controls with you.')
         self.screenshot('14-parent-password-form')
