@@ -6,6 +6,7 @@ import android.content.Intent
 import com.lyra.blocker.LyraUi
 import com.lyra.blocker.MainActivity
 import com.lyra.blocker.OverlaySurface
+import com.lyra.blocker.ProtectionStore
 
 class FamilyBlockedOverlay(private val service: AccessibilityService) {
     private val surface = OverlaySurface(service)
@@ -14,7 +15,10 @@ class FamilyBlockedOverlay(private val service: AccessibilityService) {
     fun show(host: String, category: String) {
         if (surface.visible && shownHost == host && shownCategory == category) return
         hide()
-        val (heading, explanation) = when(category) {
+        val family = ProtectionStore(service).familyManaged
+        val (heading, explanation) = if (!family) {
+            "A boundary you chose." to if (category == "source") "Your source-page guard is enabled. Review it in M57 protection settings." else "This website matches a browsing boundary on this phone. Choose another page, or review your categories and domain exceptions in M57 settings."
+        } else when(category) {
             "adult" -> "Curiosity is part of you." to "There is nothing to be ashamed of. This website is outside the boundaries chosen for this device. You can talk with a trusted adult about what you are curious about."
             "gambling" -> "Keep the next choice yours." to "Your administrator has put betting and gambling websites outside this space. Step away from the pressure to play or spend, and ask someone you trust if you want to talk about it."
             "base" -> "A safer route from here." to "This domain appears on the enabled adware and malware list. Choose another website. A list can make mistakes; your administrator can review an exception."
@@ -25,7 +29,7 @@ class FamilyBlockedOverlay(private val service: AccessibilityService) {
         }
         val card = LyraUi.column(service, 26).apply {
             addView(LyraUi.brand(service))
-            addView(LyraUi.badge(service, FamilyCategory.byKey(category)?.title ?: "Administrator boundary"))
+            addView(LyraUi.badge(service, FamilyCategory.byKey(category)?.title ?: if (family) "Administrator boundary" else "Your browsing boundary"))
             addView(LyraUi.text(service, heading, 28f, bold = true))
             addView(LyraUi.text(service, explanation, 15f, LyraUi.muted))
             addView(LyraUi.text(service, host, 13f, LyraUi.muted))
@@ -35,12 +39,12 @@ class FamilyBlockedOverlay(private val service: AccessibilityService) {
             addView(LyraUi.button(service, "Go to Home", false) {
                 if (service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)) hide()
             })
-            addView(LyraUi.link(service, "Ask an administrator") {
+            addView(LyraUi.link(service, if (family) "Ask an administrator" else "Open M57 settings") {
                 runCatching { service.startActivity(Intent(service, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
                     .onSuccess { hide() }
             })
         }
-        if (surface.show(card, "Website blocked by administrator settings")) { shownHost = host; shownCategory = category }
+        if (surface.show(card, if (family) "Website blocked by administrator settings" else "Website blocked by your browsing settings")) { shownHost = host; shownCategory = category }
     }
     fun hide() { surface.hide(); shownHost = null; shownCategory = null }
 }

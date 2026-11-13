@@ -64,7 +64,7 @@ class RedirectOverlay(
         }
         val duration = store.countdown * 1000L
         val deadline = SystemClock.elapsedRealtime() + duration
-        if(ValueAnimator.areAnimatorsEnabled())animation=ValueAnimator.ofFloat(1f,0f).apply{
+        if(Motion.enabled(service))animation=ValueAnimator.ofFloat(1f,0f).apply{
             this.duration=duration;interpolator=LinearInterpolator();addUpdateListener{ring.fraction=it.animatedValue as Float};start()
         }
         val tick = object : Runnable {
@@ -72,7 +72,7 @@ class RedirectOverlay(
                 if (!visible) return
                 val remaining = (deadline - SystemClock.elapsedRealtime()).coerceAtLeast(0)
                 ring.seconds=ceil(remaining/1000.0).toInt()
-                if(!ValueAnimator.areAnimatorsEnabled())ring.fraction=remaining.toFloat()/duration
+                if(!Motion.enabled(service))ring.fraction=remaining.toFloat()/duration
                 if (remaining == 0L) launch()
                 else {
                     val caption = "Open Lyra · ${ceil(remaining / 1000.0).toInt()}s"

@@ -14,12 +14,12 @@ object FamilyControl {
     fun reconcile(context: Context) {
         val app = context.applicationContext
         val store = FamilyStore(app)
-        if (!store.vpnRequested || (store.enabled.isEmpty() && store.block.isEmpty())) {
+        if (!store.vpnRequested || !store.vpnConfigured) {
             app.stopService(Intent(app, FamilyVpnService::class.java))
             return
         }
         if (FamilyVpnService.running) return
-        if (FamilyRepository.get(app).index.size() == 0) { store.vpnMessage("Waiting for enabled lists to download"); return }
+        if (store.resolverMode == ResolverPolicy.NETWORK && FamilyRepository.get(app).index.size() == 0) { store.vpnMessage("Waiting for enabled lists to download"); return }
         if (VpnService.prepare(app) != null) { store.vpnMessage("Android VPN approval needed; start from Family browsing"); return }
         runCatching { app.startForegroundService(Intent(app, FamilyVpnService::class.java)) }
             .onFailure { store.vpnMessage("Could not start in the background. Start from Family browsing.") }

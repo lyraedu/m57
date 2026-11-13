@@ -8,6 +8,29 @@ import android.provider.Settings
 class ProtectionStore(context: Context) {
     private val context = context.applicationContext
     val prefs = context.getSharedPreferences("lyra_protection", Context.MODE_PRIVATE)
+    /** Existing password installations retain family authority and their current settings. */
+    val familyManaged: Boolean get() = prefs.getString("authority", "family") == "family"
+    val onboarded: Boolean get() = prefs.getBoolean("onboarded", hasPassword)
+    var onboardingStep: Int
+        get() = prefs.getInt("onboarding_step", 0).coerceIn(0, 5)
+        set(value) { prefs.edit().putInt("onboarding_step", value.coerceIn(0, 5)).apply() }
+    var draftFamily: Boolean
+        get() = prefs.getBoolean("draft_family", false)
+        set(value) { prefs.edit().putBoolean("draft_family", value).apply() }
+    val authorityChosen: Boolean get() = prefs.contains("draft_family")
+    var draftLyra: Boolean
+        get() = prefs.getBoolean("draft_lyra", false)
+        set(value) { prefs.edit().putBoolean("draft_lyra", value).apply() }
+    var settingsGuard: Boolean
+        get() = prefs.getBoolean("settings_guard", hasPassword)
+        set(value) { prefs.edit().putBoolean("settings_guard", value).apply() }
+    fun finishOnboarding() {
+        check(!hasPassword) { "Existing administrator settings cannot be replaced by onboarding" }
+        check(prefs.edit().putString("authority", if (draftFamily) "family" else "personal")
+            .putBoolean("ai_enabled", draftLyra).putBoolean("settings_guard", false)
+            .putBoolean("repo_guard", false).putBoolean("onboarded", true)
+            .putBoolean("setup_complete", !draftFamily).putBoolean("consent", true).commit())
+    }
     var setupStep:Int
         get()=prefs.getInt("setup_step",0).coerceIn(0,3)
         set(value){require(value in 0..3);prefs.edit().putInt("setup_step",value).apply()}
@@ -17,6 +40,9 @@ class ProtectionStore(context: Context) {
     var aiEnabled: Boolean
         get() = prefs.getBoolean("ai_enabled", true)
         set(value) { prefs.edit().putBoolean("ai_enabled", value).apply() }
+    var googleAiMode: Boolean
+        get() = prefs.getBoolean("google_ai_mode", false)
+        set(value) { prefs.edit().putBoolean("google_ai_mode", value).apply() }
     var disabledApps: Set<String>
         get() = prefs.getStringSet("disabled_apps", emptySet())!!.toSet()
         set(value) { prefs.edit().putStringSet("disabled_apps", value.toSet()).apply() }

@@ -9,7 +9,8 @@ import android.content.Intent
 
 class ProtectionAdminReceiver : DeviceAdminReceiver() {
     override fun onDisableRequested(context: Context, intent: Intent): CharSequence =
-        "Removing administrator access makes ${context.getString(R.string.app_name)} easier to uninstall. Manage protection in the app with the administrator password."
+        "Removing administrator access makes ${context.getString(R.string.app_name)} easier to uninstall. " +
+            if (ProtectionStore(context).familyManaged) "Manage protection in the app with the administrator password." else "Manage protection in M57 settings."
 }
 
 object ManagedProtection {

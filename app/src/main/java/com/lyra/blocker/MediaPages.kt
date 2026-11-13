@@ -18,6 +18,7 @@ class MediaPages(private val activity:Activity,private val authorised:()->Boolea
     }
     fun show(page:LinearLayout){
         page.addView(LyraUi.text(activity,"Make the next scroll a choice.",30f,bold=true))
+        Illustrations.addTo(page, "short-video-choice", 190)
         page.addView(LyraUi.text(activity,"Protect full-screen short-video spaces while keeping ordinary YouTube videos and the Instagram home feed available.",15f,LyraUi.muted))
         toggle(page,"YouTube Shorts",store.youtubeEnabled){store.youtubeEnabled=it}
         toggle(page,"Instagram full-screen Reels",store.instagramEnabled){store.instagramEnabled=it}
@@ -30,12 +31,12 @@ class MediaPages(private val activity:Activity,private val authorised:()->Boolea
         page.addView(LyraUi.badge(activity,"EXPERIMENTAL EXTRA PLATFORMS"))
         toggle(page,"Other short-video platforms",store.extraVideosEnabled){store.extraVideosEnabled=it}
         val extra=LyraUi.column(activity,0).apply{visibility=View.GONE}
-        page.addView(LyraUi.link(activity,"Choose extra platforms  +"){extra.visibility=if(extra.visibility==View.VISIBLE)View.GONE else View.VISIBLE});page.addView(extra)
+        page.addView(LyraUi.link(activity,"Choose extra platforms  +"){Motion.reveal(extra)});page.addView(extra)
         for((key,label)in linkedMapOf("snapchat" to "Snapchat Spotlight only","facebook" to "Facebook Reels","tiktok" to "TikTok full-screen videos","josh" to "Josh / Josh Lite · entire app"))
             toggle(extra,label,key in store.extraVideoApps){enabled->store.extraVideoApps=if(enabled)store.extraVideoApps+key else store.extraVideoApps-key}
         page.addView(LyraUi.text(activity,"Extra-platform recognition depends on app versions and is not fully supported. Josh protection covers its entire package, including chat/calls; leave it off if those features must stay available. Instagram feed previews and normal messaging are not intentionally blocked by the full-screen viewer rules.",13f,LyraUi.muted))
         page.addView(LyraUi.button(activity,"Report a detection problem",false){
-            runCatching{activity.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(store.destination).buildUpon().path("/contact").clearQuery().appendQueryParameter("topic","missing-feature").appendQueryParameter("source","m57").build()))}
+            runCatching{activity.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/lyraedu/m57/issues")))}
         })
     }
 }

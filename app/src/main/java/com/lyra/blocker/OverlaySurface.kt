@@ -23,6 +23,7 @@ class OverlaySurface(private val service: AccessibilityService) {
     fun show(card: LinearLayout, announcement: String): Boolean {
         if (visible) return false
         val backdrop = FrameLayout(service)
+        backdrop.accessibilityPaneTitle = announcement
         val blurEnabled = manager.isCrossWindowBlurEnabled
         fun backdropFor(blur:Boolean)=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
             Color.argb(if(blur)225 else 255,255,248,240),Color.argb(if(blur)235 else 255,250,244,238)))
@@ -64,8 +65,7 @@ class OverlaySurface(private val service: AccessibilityService) {
         blurListener = listener
         manager.addCrossWindowBlurEnabledListener(service.mainExecutor, listener)
         backdrop.requestApplyInsets()
-        backdrop.alpha=0f;backdrop.animate().alpha(1f).setDuration(180).start()
-        backdrop.announceForAccessibility(announcement)
+        Motion.enter(backdrop)
         return true
     }
     fun hide() {

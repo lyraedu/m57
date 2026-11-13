@@ -16,3 +16,6 @@ docs/implementation.md
 *.log
 dist/
 __pycache__/
+.venv-imagegen/
+output/imagegen/
+tmp/imagegen/

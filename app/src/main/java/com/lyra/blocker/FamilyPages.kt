@@ -16,6 +16,7 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import com.lyra.blocker.family.*
+import com.lyra.blocker.Illustrations
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -32,12 +33,7 @@ class FamilyPages(private val activity: Activity, private val authorised: () -> 
         page.addView(LyraUi.text(activity, detail, 15f, LyraUi.muted))
     }
     private fun link(page: LinearLayout, title: String, detail: String, action: () -> Unit) {
-        page.addView(LyraUi.card(activity).apply {
-            addView(LyraUi.text(activity, "$title  ›", 19f, bold = true))
-            addView(LyraUi.text(activity, detail, 14f, LyraUi.muted))
-            isClickable = true; isFocusable = true
-            setOnClickListener { if (authorised()) action() }
-        })
+        page.addView(LyraUi.routeCard(activity, "◇", title, detail) { if (authorised()) action() })
     }
     private fun stamp(time: Long) = if (time == 0L) "Not synced yet" else DateTimeFormatter.ofPattern("d MMM · HH:mm z").format(Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()))
     private fun switch(page: LinearLayout, label: String, checked: Boolean, changed: (Boolean) -> Unit) {
@@ -61,6 +57,8 @@ class FamilyPages(private val activity: Activity, private val authorised: () -> 
 
     fun home(page: LinearLayout) {
         heading(page, "Care, with understanding.", "Choose the boundaries for this device. The same domain lists power local DNS filtering and browser protection.")
+        Illustrations.addTo(page, "browsing-boundaries", 180)
+        page.addView(LyraUi.button(activity, "DNS provider · ${resolverName(store.resolverMode)}", false) { if (authorised()) chooseResolver() })
         val status = LyraUi.text(activity, "", 14f, LyraUi.muted)
         page.addView(LyraUi.card(activity).apply { addView(status) })
         var stopAction = FamilyVpnService.running
@@ -86,7 +84,7 @@ class FamilyPages(private val activity: Activity, private val authorised: () -> 
             }
             "$vpn\n${if (repository.loading) "Loading saved lists…" else "${repository.index.size()} loaded domain rules"}${if (!repository.ready) " · list setup incomplete" else ""}\n$sync"
         }
-        page.addView(LyraUi.text(activity, "Android will ask for VPN approval. This filter uses the phone's network DNS resolver, without an M57 VPN server. Another VPN cannot be active in the same profile. Browser Secure DNS, Private DNS and direct IP connections may bypass DNS rules; use the browser layer too. This is not a traffic-encryption VPN.", 13f, LyraUi.muted))
+        page.addView(LyraUi.text(activity, "Android asks for VPN approval. M57 filters DNS on this phone and forwards allowed queries to your chosen provider. Cloudflare receives queries only when you choose its resolver here; M57 does not change Android's Private DNS. Another VPN can replace this filter. Secure DNS, cached addresses and direct-IP connections have separate limits. General web traffic is not encrypted by this filter.", 13f, LyraUi.muted))
         switch(page, "Block listed domains in browsers", store.browserEnabled) { store.browserEnabled = it }
         page.addView(LyraUi.text(activity, "The browser layer needs M57 accessibility access and a readable address bar. Supported detection rules cover Chrome and related browsers, Samsung Internet, Firefox variants, Firefox Focus and Opera; versions and hidden URLs need device checks.", 13f, LyraUi.muted))
         for (category in FamilyCategory.values()) {
@@ -104,6 +102,31 @@ class FamilyPages(private val activity: Activity, private val authorised: () -> 
                 if (authorised()) activity.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 5704)
             })
         }
+    }
+
+    private fun resolverName(mode: String): String = when (mode) {
+        ResolverPolicy.NETWORK -> "This network"
+        ResolverPolicy.MALWARE -> "Cloudflare · malware"
+        ResolverPolicy.FAMILY -> "Cloudflare · malware and adult domains"
+        else -> "Needs review"
+    }
+
+    private fun chooseResolver() {
+        val modes = listOf(ResolverPolicy.NETWORK, ResolverPolicy.MALWARE, ResolverPolicy.FAMILY)
+        var selected = store.resolverMode.takeIf { it in modes }
+        val body = LyraUi.column(activity, 18)
+        body.addView(LyraUi.text(activity, "This choice affects only M57's local DNS VPN. Cloudflare's family resolver filters known malware and adult domains; your local gambling, social and custom rules remain separate.", 15f))
+        val choices = android.widget.RadioGroup(activity)
+        modes.forEach { mode -> choices.addView(android.widget.RadioButton(activity).apply {
+            id = View.generateViewId(); text = resolverName(mode); minHeight = LyraUi.dp(activity, 52)
+            setTextColor(LyraUi.ink); isChecked = selected == mode
+            setOnCheckedChangeListener { _, checked -> if (checked) selected = mode }
+        }) }; body.addView(choices)
+        body.addView(LyraUi.text(activity, "With Cloudflare selected, permitted domain queries go to Cloudflare over HTTPS. This does not encrypt other web traffic. Explicit Always allow entries use this network's DNS instead; a parent pause does the same. If Cloudflare cannot answer, M57 returns unavailable and does not silently switch to unfiltered DNS.", 13f, LyraUi.muted))
+        AlertDialog.Builder(activity).setTitle("Choose the DNS provider").setView(android.widget.ScrollView(activity).apply { addView(body) })
+            .setNegativeButton("Cancel", null).setPositiveButton("Use this provider") { _, _ ->
+                if (authorised() && selected != null) { store.resolverMode = selected!!; FamilyControl.reconcile(activity); navigate(AdminPage.FAMILY) }
+            }.show().also(LyraUi::styleDialog)
     }
 
     fun category(page: LinearLayout) {
@@ -143,6 +166,11 @@ class FamilyPages(private val activity: Activity, private val authorised: () -> 
         }
         val allow = field("Always allow", store.allow)
         val block = field("Also block", store.block)
+        page.addView(LyraUi.text(activity, "Pages to block in browsers", 18f, bold = true))
+        page.addView(LyraUi.text(activity, "A page rule can include a path, for example example.com/videos. It covers that path and its child pages. Query parameters in a rule must be present; extra parameters are allowed. Page rules need a visible address bar and do not change DNS filtering.", 14f, LyraUi.muted))
+        val urls = field("Page URLs · one per line", store.blockedUrls)
+        val browser = Switch(activity).apply { text = "Use these rules in supported browsers"; isChecked = store.browserEnabled; minHeight = LyraUi.dp(activity, 56); setTextColor(LyraUi.ink) }; page.addView(browser)
+        page.addView(LyraUi.text(activity, "Always allow wins over local block/page rules and bypasses the selected family DNS provider for that domain. These exceptions require parent access in family mode.", 13f, LyraUi.muted))
         page.addView(LyraUi.button(activity, "Save exceptions") {
             if (!authorised()) return@button
             fun parse(input: EditText): Set<String>? {
@@ -154,7 +182,10 @@ class FamilyPages(private val activity: Activity, private val authorised: () -> 
             }
             val allowed = parse(allow) ?: return@button
             val blocked = parse(block) ?: return@button
-            store.prefs.edit().putStringSet("allow_domains", allowed).putStringSet("block_domains", blocked).apply()
+            val pages = urls.text.toString().lines().map(String::trim).filter(String::isNotEmpty).toSet()
+            if (pages.size > 500 || !pages.all(BrowserUrlPolicy::validRule)) { urls.error = "Use at most 500 valid HTTP(S) page URLs without usernames or passwords"; return@button }
+            store.prefs.edit().putStringSet("allow_domains", allowed).putStringSet("block_domains", blocked)
+                .putStringSet("blocked_urls", pages).putBoolean("browser_enabled", browser.isChecked).apply()
             FamilyControl.changed(activity)
             navigate(AdminPage.FAMILY)
         })

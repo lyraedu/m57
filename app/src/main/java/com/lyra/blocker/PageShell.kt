@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.lyra.blocker
 
-import android.app.Activity
+import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
@@ -14,10 +14,11 @@ import android.widget.ScrollView
 import kotlin.math.abs
 
 /** Insets, keyboard avoidance and scroll-aware navigation shared by the native pages. */
-class PageShell(activity: Activity, tab: AdminTab? = null, onTab: (AdminTab) -> Unit = {}) : FrameLayout(activity) {
+class PageShell @JvmOverloads constructor(activity: Context, tab: AdminTab? = null, onTab: (AdminTab) -> Unit = {}, customDock: View? = null) : FrameLayout(activity) {
     val content = LyraUi.column(activity)
     private val scroll = ScrollView(activity)
-    private val dock = tab?.let { AdminDock(activity, it, onTab) }
+    private val dock = customDock ?: tab?.let { AdminDock(activity, it, onTab) }
+    private var footer: View? = null
     private var keyboard = false
     private var shown = true
     private var direction = 0
@@ -31,7 +32,12 @@ class PageShell(activity: Activity, tab: AdminTab? = null, onTab: (AdminTab) -> 
         scroll.isVerticalScrollBarEnabled = false
         scroll.isFillViewport = true
         scroll.clipToPadding = false
-        scroll.addView(content)
+        val stage = LinearLayout(activity).apply { gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL; addView(content, LinearLayout.LayoutParams(-1, -2)) }
+        stage.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            val desired = stage.width.coerceAtMost(LyraUi.dp(activity, 640))
+            if (content.layoutParams.width != desired) content.layoutParams = LinearLayout.LayoutParams(desired, -2)
+        }
+        scroll.addView(stage)
         addView(scroll, LayoutParams(-1, -1))
         dock?.let { navigation ->
             addView(navigation, LayoutParams(-1, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
@@ -48,7 +54,7 @@ class PageShell(activity: Activity, tab: AdminTab? = null, onTab: (AdminTab) -> 
             scroll.setOnScrollChangeListener { _: View, _: Int, y: Int, _: Int, oldY: Int ->
                 if (keyboard) return@setOnScrollChangeListener
                 val assisted = activity.getSystemService(AccessibilityManager::class.java).isTouchExplorationEnabled
-                val remaining = (content.height - scroll.height - y).coerceAtLeast(0)
+                val remaining = (stage.height - scroll.height - y).coerceAtLeast(0)
                 if (assisted || y <= 24 * density || remaining <= 72 * density) {
                     travel = 0; setDockVisible(true)
                 } else {
@@ -79,11 +85,26 @@ class PageShell(activity: Activity, tab: AdminTab? = null, onTab: (AdminTab) -> 
             updateContentPadding()
             insets
         }
+        content.post { Motion.enter(content) }
     }
 
     private fun updateContentPadding() {
-        val bottom = if (dock != null && !keyboard) dock.height + LyraUi.dp(context, 36) else LyraUi.dp(context, 24)
+        val occupied = if (keyboard) 0 else maxOf(dock?.height ?: 0, footer?.height ?: 0)
+        val bottom = occupied + LyraUi.dp(context, if (occupied > 0) 36 else 24)
         content.setPadding(LyraUi.dp(context, 24), LyraUi.dp(context, 24), LyraUi.dp(context, 24), bottom)
+    }
+
+    fun setFooter(view: View) {
+        footer?.let(::removeView)
+        footer = view
+        view.setPadding(LyraUi.dp(context, 20), LyraUi.dp(context, 6), LyraUi.dp(context, 20), LyraUi.dp(context, 12))
+        view.setBackgroundColor(LyraUi.background)
+        addView(view, LayoutParams(-1, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL))
+        view.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateContentPadding() }
+        addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            val desired = (width - paddingLeft - paddingRight).coerceAtMost(LyraUi.dp(context, 640))
+            if (view.layoutParams.width != desired) view.layoutParams = LayoutParams(desired, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL)
+        }
     }
 
     private fun setDockVisible(visible: Boolean) {
@@ -95,11 +116,12 @@ class PageShell(activity: Activity, tab: AdminTab? = null, onTab: (AdminTab) -> 
         navigation.importantForAccessibility = if (visible) View.IMPORTANT_FOR_ACCESSIBILITY_AUTO else View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
         navigation.animate().alpha(if (visible) 1f else 0f)
             .translationY(if (visible) 0f else navigation.height + LyraUi.dp(context, 24).toFloat())
-            .setDuration(180).withEndAction { if (!shown) navigation.visibility = View.INVISIBLE }.start()
+            .setDuration(if (Motion.enabled(context)) 180 else 0).withEndAction { if (!shown) navigation.visibility = View.INVISIBLE }.start()
     }
 
     override fun onDetachedFromWindow() {
         dock?.animate()?.cancel()
+        content.animate().cancel()
         super.onDetachedFromWindow()
     }
 }

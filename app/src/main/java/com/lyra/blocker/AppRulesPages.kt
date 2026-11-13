@@ -86,13 +86,13 @@ class AppRulesPages(private val activity: Activity, private val authorised: () -
         toggle(page,"Meta AI protection",store.metaEnabled){store.metaEnabled=it}
         val detail=LyraUi.column(activity,0).apply{visibility=android.view.View.GONE}
         page.addView(LyraUi.link(activity,"Choose individual Meta services  +") {
-            detail.visibility=if(detail.visibility==android.view.View.VISIBLE)android.view.View.GONE else android.view.View.VISIBLE
+            Motion.reveal(detail)
         });page.addView(detail)
         for((key,label) in linkedMapOf("whatsapp" to "WhatsApp / Business","instagram" to "Instagram","facebook" to "Facebook","messenger" to "Messenger","meta" to "Dedicated Meta AI app"))
             toggle(detail,label,key in store.metaServices){enabled->store.metaServices=if(enabled)store.metaServices+key else store.metaServices-key}
         page.addView(LyraUi.text(activity,"The dedicated Meta AI package is also used for Meta glasses; enabling its app rule redirects that entire package. Inline AI prompts and translated/unrecognised headers may not be detected.",13f,LyraUi.muted))
         page.addView(LyraUi.button(activity,"Report a blocking problem",false) {
-            runCatching {activity.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(store.destination).buildUpon().path("/contact").clearQuery().appendQueryParameter("topic","missing-feature").appendQueryParameter("source","m57").build()))}
+            runCatching {activity.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/lyraedu/m57/issues")))}
         })
     }
 }

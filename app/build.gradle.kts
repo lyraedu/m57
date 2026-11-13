@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.lyra.blocker"
-    compileSdk = 35
+    compileSdk = 36
     buildFeatures { buildConfig = true }
     val sourceRef = providers.environmentVariable("M57_SOURCE_REF").orElse("").get()
     require(sourceRef.isEmpty() || sourceRef.matches(Regex("[a-f0-9]{40}"))) { "M57_SOURCE_REF must be a full commit SHA" }
     defaultConfig {
         applicationId = "com.lyra.blocker"
         minSdk = 34
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 10
         versionName = "0.6.4"
         buildConfigField("String", "SOURCE_REF", "\"$sourceRef\"")
@@ -26,6 +26,13 @@ android {
         keyPassword = providers.environmentVariable("M57_KEY_PASSWORD").get()
     }
     buildTypes {
+        create("preview") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".preview"
+            versionNameSuffix = "-preview"
+            resValue("string", "app_name", "M57 Preview")
+            matchingFallbacks += listOf("debug")
+        }
         release {
             if (!releaseStore.isNullOrBlank()) signingConfig = signingConfigs.getByName("distribution")
             isMinifyEnabled = true

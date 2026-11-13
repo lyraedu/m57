@@ -22,8 +22,14 @@ object LyraUi {
     val ink = Color.rgb(62, 46, 39)
     val muted = Color.rgb(117, 107, 99)
     val orange = Color.rgb(213, 106, 58)
+    val actionOrange = Color.rgb(165, 72, 34)
     val line = Color.rgb(235, 232, 230)
     val soft = Color.rgb(248, 233, 218)
+    val sand = Color.rgb(248, 233, 218)
+    val moss = Color.rgb(107, 143, 107)
+    val mossInk = Color.rgb(61, 92, 64)
+    val mossSoft = Color.rgb(233, 241, 226)
+    val apricotSoft = Color.rgb(252, 225, 203)
     fun dp(context: Context, value: Int) = (value * context.resources.displayMetrics.density).toInt()
     fun shape(color: Int, radius: Float = 24f, border: Int? = null) = GradientDrawable().apply {
         setColor(color)
@@ -47,9 +53,10 @@ object LyraUi {
     fun text(context: Context, content: String, size: Float = 16f, color: Int = ink, bold: Boolean = false) = TextView(context).apply {
         text = content
         textSize = size
-        setTextColor(color)
-        typeface = Typeface.create(if (bold) "sans-serif-medium" else "sans-serif", Typeface.NORMAL)
+        setTextColor(if (color == orange && size < 24f) actionOrange else color)
+        typeface = Typeface.create(context.resources.getFont(R.font.sora), if (bold) 600 else 400, false)
         includeFontPadding = false
+        breakStrategy = android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
         setLineSpacing(dp(context, 3).toFloat(), 1.08f)
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(context, 10) }
     }
@@ -57,7 +64,7 @@ object LyraUi {
         text = title
         isAllCaps = false
         textSize = 15f
-        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        typeface = Typeface.create(context.resources.getFont(R.font.sora), 600, false)
         letterSpacing = 0f
         setTextColor(if (primary) Color.WHITE else ink)
         // Clear the platform Material tint/insets before drawing our button.
@@ -65,12 +72,13 @@ object LyraUi {
         stateListAnimator = null
         background = RippleDrawable(
             ColorStateList.valueOf(if (primary) 0x30FFFFFF else 0x10000000),
-            shape(if (primary) orange else Color.WHITE, dp(context, 16).toFloat(), if (primary) null else line), null,
+            shape(if (primary) actionOrange else Color.WHITE, dp(context, 16).toFloat(), if (primary) null else line), null,
         )
         minimumHeight = dp(context, 52)
         minHeight = dp(context, 52)
         setPadding(dp(context, 18), dp(context, 14), dp(context, 18), dp(context, 14))
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(context, 8) }
+        Motion.press(this)
         setOnClickListener { action() }
     }
     fun link(context: Context, title: String, action: () -> Unit) = text(context, title, 13f, muted, true).apply {
@@ -79,6 +87,12 @@ object LyraUi {
         setPadding(0, dp(context, 14), 0, dp(context, 14))
         isClickable = true
         isFocusable = true
+        accessibilityDelegate = object : View.AccessibilityDelegate() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.className = "android.widget.Button"
+            }
+        }
         setOnClickListener { action() }
     }
     fun brand(context: Context) = LinearLayout(context).apply {
@@ -93,7 +107,7 @@ object LyraUi {
         addView(badge(context, "FOCUS", orange, Color.rgb(255, 240, 228)).apply {
             layoutParams = LinearLayout.LayoutParams(-2, -2)
         })
-        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(context, 28) }
+        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(context, 22) }
     }
     fun badge(context: Context, title: String, color: Int = orange, fill: Int = Color.rgb(255, 240, 228)) = text(context, title, 10f, color, true).apply {
         letterSpacing = 0.09f
@@ -105,19 +119,39 @@ object LyraUi {
         background = glass(context)
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(context, 12); bottomMargin = dp(context, 12) }
     }
+    fun routeCard(context: Context, icon: String, title: String, detail: String, action: () -> Unit) = card(context).apply {
+        background = RippleDrawable(ColorStateList.valueOf(0x18D56A3A), glass(context), null)
+        addView(feature(context, icon, "$title  ›", detail))
+        isClickable = true; isFocusable = true; contentDescription = "$title. $detail"
+        descendantFocusability = LinearLayout.FOCUS_BLOCK_DESCENDANTS
+        accessibilityDelegate = object : View.AccessibilityDelegate() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
+                super.onInitializeAccessibilityNodeInfo(host, info); info.className = "android.widget.Button"
+            }
+        }
+        Motion.press(this); setOnClickListener { action() }
+    }
+    fun section(context: Context, title: String, detail: String? = null, green: Boolean = false) = column(context, 0).apply {
+        addView(View(context).apply { setBackgroundColor(if (green) moss else orange) }, LinearLayout.LayoutParams(dp(context, 28), dp(context, 3)).apply { bottomMargin = dp(context, 12) })
+        addView(text(context, title, 21f, if (green) mossInk else ink, true).apply { isAccessibilityHeading = true })
+        if (detail != null) addView(text(context, detail, 14f, muted))
+        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(context, 20); bottomMargin = dp(context, 8) }
+    }
     fun feature(context: Context, icon: String, title: String, detail: String) = LinearLayout(context).apply {
         gravity = Gravity.CENTER_VERTICAL
-        val tint = orange
-        addView(text(context, icon, 14f, tint, true).apply {
-            gravity = Gravity.CENTER
-            background = shape(Color.rgb(255, 241, 232), dp(context, 14).toFloat())
-            layoutParams = LinearLayout.LayoutParams(dp(context, 42), dp(context, 42)).apply { marginEnd = dp(context, 14) }
-        })
+        val kind = when (icon) { "Ⅱ" -> M57Icon.PAUSE; "♡" -> M57Icon.SHIELD; "◇" -> M57Icon.BROWSER; "⌘" -> M57Icon.SETTINGS; "◎" -> M57Icon.FOCUS; "◷" -> M57Icon.CLOCK; "▦" -> M57Icon.PLAN; "↗" -> M57Icon.ARROW; "i" -> M57Icon.INFO; else -> null }
+        val green = kind in setOf(M57Icon.BROWSER, M57Icon.SHIELD, M57Icon.PLAN)
+        val tile = android.widget.FrameLayout(context).apply {
+            background = shape(if (green) mossSoft else apricotSoft, dp(context, 14).toFloat())
+            if (kind == null) addView(text(context, icon, 14f, actionOrange, true).apply { gravity = Gravity.CENTER }, android.widget.FrameLayout.LayoutParams(-1, -1))
+            else addView(M57IconView(context, kind, if (green) mossInk else actionOrange), android.widget.FrameLayout.LayoutParams(dp(context, 23), dp(context, 23), Gravity.CENTER))
+        }
+        addView(tile, LinearLayout.LayoutParams(dp(context, 44), dp(context, 44)).apply { marginEnd = dp(context, 14) })
         addView(column(context, 0).apply {
-            addView(text(context, title, 15f, ink, true).apply {
+            addView(text(context, title, 16f, ink, true).apply {
                 layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(context, 5) }
             })
-            addView(text(context, detail, 12f, muted).apply { layoutParams = LinearLayout.LayoutParams(-1, -2) })
+            addView(text(context, detail, 14f, muted).apply { layoutParams = LinearLayout.LayoutParams(-1, -2) })
         }, LinearLayout.LayoutParams(0, -2, 1f))
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(context, 9); bottomMargin = dp(context, 9) }
     }
@@ -137,7 +171,7 @@ object LyraUi {
     }
     fun styleDialog(dialog: AlertDialog) {
         dialog.window?.setBackgroundDrawable(shape(background, dp(dialog.context, 24).toFloat()))
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(orange)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(actionOrange)
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(muted)
     }
 }

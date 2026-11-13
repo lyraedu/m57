@@ -24,6 +24,8 @@ import com.lyra.blocker.ProtectionStore
 import com.lyra.blocker.R
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.net.URL
+import javax.net.ssl.HttpsURLConnection
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -35,7 +37,7 @@ class FamilyVpnService : VpnService(), SharedPreferences.OnSharedPreferenceChang
     private lateinit var protection: ProtectionStore
     private lateinit var repository: FamilyRepository
     private val handler = Handler(Looper.getMainLooper())
-    private val callbacks = Executors.newFixedThreadPool(2)
+    private val callbacks = Executors.newFixedThreadPool(4)
     private val slots = Semaphore(64)
     private val pending = ConcurrentHashMap.newKeySet<CancellationSignal>()
     private val writeLock = Any()
@@ -70,7 +72,8 @@ class FamilyVpnService : VpnService(), SharedPreferences.OnSharedPreferenceChang
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
-            if (!store.vpnRequested || VpnService.prepare(this) != null || repository.index.size() == 0) { stopSelf(); return START_NOT_STICKY }
+            if (!store.vpnRequested || VpnService.prepare(this) != null || !store.vpnConfigured ||
+                (store.resolverMode == ResolverPolicy.NETWORK && repository.index.size() == 0)) { stopSelf(); return START_NOT_STICKY }
             // Configured VPNs qualify for systemExempted; recheck consent before foreground startup.
             startForeground(NOTIFICATION, notification("Starting local DNS protection"), ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED)
             if (tunnel == null) {
@@ -157,6 +160,40 @@ class FamilyVpnService : VpnService(), SharedPreferences.OnSharedPreferenceChang
         }
         handler.postDelayed(timeout, 6_000)
         try {
+            val mode = ResolverPolicy.effectiveMode(store.resolverMode, protection.paused, packet.host, store.allow)
+            if (mode != ResolverPolicy.NETWORK) {
+                callbacks.execute {
+                    var connection: HttpsURLConnection? = null
+                    try {
+                        if (cancellation.isCanceled || tunnel !== descriptor) return@execute
+                        connection = network.openConnection(URL(ResolverPolicy.endpoint(mode))) as HttpsURLConnection
+                        val request = connection
+                        request.connectTimeout = 2_500; request.readTimeout = 2_500
+                        request.instanceFollowRedirects = false
+                        request.requestMethod = "POST"; request.doOutput = true
+                        request.setRequestProperty("Content-Type", "application/dns-message")
+                        request.setRequestProperty("Accept", "application/dns-message")
+                        request.setRequestProperty("Accept-Encoding", "identity")
+                        request.setFixedLengthStreamingMode(packet.query.size)
+                        cancellation.setOnCancelListener { request.disconnect() }
+                        if (cancellation.isCanceled) return@execute
+                        request.outputStream.use { it.write(packet.query) }
+                        if (request.responseCode != 200 || request.contentType?.substringBefore(';') != "application/dns-message") {
+                            finish(packet.failed()); return@execute
+                        }
+                        val response = request.inputStream.use { it.readNBytes(65_001) }
+                        finish(packet.answer(response))
+                    } catch (_: Exception) {
+                        // A selected filtered provider fails closed, without changing DNS provider or following redirects.
+                        finish(packet.failed())
+                    } finally {
+                        connection?.disconnect()
+                        cancellation.setOnCancelListener(null)
+                        handler.removeCallbacks(timeout)
+                    }
+                }
+                return
+            }
             DnsResolver.getInstance().rawQuery(network, packet.query,
                 DnsResolver.FLAG_NO_CACHE_LOOKUP or DnsResolver.FLAG_NO_CACHE_STORE, callbacks, cancellation,
                 object : DnsResolver.Callback<ByteArray> {
@@ -183,8 +220,11 @@ class FamilyVpnService : VpnService(), SharedPreferences.OnSharedPreferenceChang
     private fun updateNotification() {
         if (!running) return
         val message = when {
+            store.resolverMode !in ResolverPolicy.MODES -> "DNS configuration needs review · DNS requests return unavailable"
             protection.paused -> "Paused by the administrator · DNS passes through"
             underlying == null -> "Waiting for a network · DNS requests return unavailable"
+            store.resolverMode == ResolverPolicy.FAMILY -> "Cloudflare family DNS · malware and adult-domain filtering${if (store.enabled.isNotEmpty() && !repository.ready) " · some local lists missing" else ""}"
+            store.resolverMode == ResolverPolicy.MALWARE -> "Cloudflare DNS · malware-domain filtering${if (store.enabled.isNotEmpty() && !repository.ready) " · some local lists missing" else ""}"
             !repository.ready -> "Local DNS active · some enabled lists are still missing"
             else -> "Local DNS active · ${repository.index.size()} domains · browser protection is separate"
         }

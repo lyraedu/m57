@@ -39,7 +39,7 @@ object BlockPolicy {
     private val headerIds = setOf(
         "conversation_contact_name", "conversation_title", "toolbar_title", "action_bar_title",
     )
-    data class Label(val id: String, val text: String, val description: String = "", val checkable: Boolean = false, val selected: Boolean = false)
+    data class Label(val id: String, val text: String, val description: String = "", val checkable: Boolean = false, val selected: Boolean = false, val editing: Boolean = false, val heading: Boolean = false)
 
     fun googleAiMode(labels: List<Label>): Boolean = labels.any {
         it.id.startsWith("$google:id/") && it.text.trim().equals("AI Mode", ignoreCase = true) &&

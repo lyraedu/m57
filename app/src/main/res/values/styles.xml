@@ -1,12 +1,14 @@
 <resources>
     <style name="Theme.Lyra" parent="android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#F45B0B</item>
+        <item name="android:fontFamily">@font/sora</item>
+        <item name="android:colorAccent">#D56A3A</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:statusBarColor">#FBFAF9</item>
-        <item name="android:navigationBarColor">#FBFAF9</item>
+        <item name="android:statusBarColor">#FBF8F5</item>
+        <item name="android:navigationBarColor">#FBF8F5</item>
         <item name="android:windowActionModeOverlay">true</item>
-        <item name="android:windowBackground">#FBFAF9</item>
+        <item name="android:windowBackground">#FBF8F5</item>
+        <item name="android:windowSplashScreenBackground">#FBF8F5</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
     </style>
 </resources>
