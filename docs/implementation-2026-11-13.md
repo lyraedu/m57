@@ -154,3 +154,41 @@ The phone was left open on Preview Home before the announced window ended.
 Screen interaction is paused for the owner's following three-hour unavailability.
 Subsequent native code and build checks can continue; new Preview installation
 waits for the next available phone window.
+
+## Current illustrated Preview snapshot
+
+The owner subsequently requested a current APK and installation, while retaining
+the broader UI and wellbeing scope and deferring online recovery only. The
+current source snapshot is `942794d2a7fe238022cfcb44cf43acec70283f5c`.
+
+This snapshot includes the illustrated permission/free-software onboarding,
+visual privacy explanation, live password feedback, protected password screens,
+ambient artwork and shared tactile interactions. A security review also fixed
+an authority boundary: an authenticated parent can edit family focus rules even
+while a child's personal commitment is active. An unauthenticated child cannot;
+personal commitments still lock personal rule editing. Pure policy checks cover
+these separate cases.
+
+The final `:app:testDebugUnitTest :app:lintPreview :app:assemblePreview` run
+passed in 4m35s. All 35 debug unit tests passed with no failures, errors or
+skips; the standalone JVM policy suites also passed. Preview lint passed with
+warnings. This is not a new full release gate or phone acceptance result.
+
+The isolated `com.lyra.blocker.preview` APK was signature-verified and packaged
+with exact Git source, license notices, build evidence and SHA-256 checksums in
+the ignored local artifact directory `dist/preview-2026-11-13-942794d/`.
+APK SHA-256:
+`2a08461fd44d82f3440e43ac1e0689e7f0e5de3a26bce262ced5a8afbd12e6ec`.
+Its embedded source stamp is unset; the packaged source and BUILD.json record
+the exact commit. It uses the development certificate, not release signing.
+
+**Installation is pending:** the authorized Samsung disconnected before the
+new APK could be installed, and ADB listed no device at packaging time. No
+installation or launch of this snapshot is claimed. The earlier installed
+Preview remains the last device-verified build. Reconnect the authorized phone
+to update in place and open it; preserve Preview and production data.
+
+The [retained wellbeing scope](wellbeing-tools.md) remains active. In particular,
+phone-use summary notifications, the broader usage dashboard, expanded Strict
+coverage and further visual/device acceptance remain unfinished. Notification
+permission onboarding alone does not implement usage-summary notifications.
