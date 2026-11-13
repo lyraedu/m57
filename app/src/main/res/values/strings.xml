@@ -1,4 +1,15 @@
 <resources>
+    <string name="password_checking">Checking password…</string>
+    <string name="password_saving">Securing your password…</string>
+    <string name="password_unlock">Unlock parent controls</string>
+    <string name="password_retry_in">Try again in %1$ds</string>
+    <string name="password_cooldown">A short pause protects parent controls. The button shows when you can try again.</string>
+    <string name="password_retry_ready">You can try your password again now.</string>
+    <string name="password_enter">Enter your parent or administrator password.</string>
+    <string name="password_previous_check">The previous check is finishing. Please wait a moment, then try again.</string>
+    <string name="password_mismatch">That password did not match. Please try again.</string>
+    <string name="password_save_failed">Your password could not be saved. Please try again.</string>
+    <string name="password_operation_failed">The password check could not finish. Please try again.</string>
     <string name="app_name">M57</string>
     <string name="accessibility_description">M57 uses accessibility locally to recognise app identities, supported browser address bars, selected screen controls, and Settings labels. It displays boundary screens for your chosen focus apps, routines, daily limits and supported short-video viewers. Optional family rules cover listed websites in supported browsers. Optional Lyra redirection opens supported AI surfaces in your configured Lyra destination. If you explicitly enable the settings guard, detected M57 App info and accessibility pages return to M57 for authorised access. M57 does not read message bodies, save browsing history or video content, or upload accessibility data. Daily limits separately need usage access. The service runs focus checks while connected; Android may stop it or revoke permissions. Coverage depends on app versions, visible controls and device layouts. Enable only if you agree to this access.</string>
     <string name="widget_title">Make a little room.</string>

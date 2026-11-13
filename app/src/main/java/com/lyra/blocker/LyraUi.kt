@@ -56,7 +56,7 @@ object LyraUi {
         setTextColor(if (color == orange && size < 24f) actionOrange else color)
         typeface = Typeface.create(context.resources.getFont(R.font.sora), if (bold) 600 else 400, false)
         includeFontPadding = false
-        breakStrategy = android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
+        breakStrategy = android.graphics.text.LineBreaker.BREAK_STRATEGY_HIGH_QUALITY
         setLineSpacing(dp(context, 3).toFloat(), 1.08f)
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(context, 10) }
     }
