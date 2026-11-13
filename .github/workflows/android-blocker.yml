@@ -31,21 +31,26 @@ jobs:
           packages: platform-tools
       - uses: gradle/actions/setup-gradle@v4
       - name: Install Android SDK
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - name: Unit tests, lint, and APK
+        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+      - name: Policy checks, unit tests, lint, APKs and release bundle
         env:
           M57_SOURCE_REF: ${{ github.sha }}
         run: |
+          sh scripts/check-jvm.sh
           python3 -m unittest discover -s scripts -p 'test_*.py'
-          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --no-daemon --max-workers=2
+          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease :app:bundleRelease :app:assemblePreview --no-daemon --max-workers=2
       - uses: actions/upload-artifact@v4
         with:
           name: m57-debug
           path: app/build/outputs/apk/debug/*.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m57-preview
+          path: app/build/outputs/apk/preview/*.apk
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: m57-checks
           path: |
             app/build/reports/tests/
-            app/build/reports/lint-results-debug.html
+            app/build/reports/lint-results-*.html

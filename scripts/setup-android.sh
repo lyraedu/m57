@@ -103,6 +103,6 @@ java -version
 javac -version
 echo 'Review and accept the Android SDK licenses to continue.'
 sdkmanager --sdk_root="$ANDROID_HOME" --licenses
-sdkmanager --sdk_root="$ANDROID_HOME" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+sdkmanager --sdk_root="$ANDROID_HOME" 'platform-tools' 'platforms;android-36' 'build-tools;35.0.0'
 ./gradlew --version --no-daemon
 echo 'Setup complete. In your terminal, run: source ~/.config/m57/android-env.sh'

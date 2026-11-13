@@ -50,7 +50,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --no-daemon --max-workers=2
 ```
 
-The Gradle gate needs JDK 17, Android SDK platform 35, and build-tools 35.0.0. `scripts/check-android.sh` wraps the full local gate when the toolchain is set up. A JVM check does not prove Android compilation, a CI build does not prove behavior on a phone, and a debug APK does not prove release signing. State which checks actually ran. Use [DEVICE_TESTS.md](DEVICE_TESTS.md) for device acceptance.
+The Gradle gate needs JDK 17, Android SDK platform 36, and build-tools 35.0.0. `scripts/check-android.sh` wraps the full local gate when the toolchain is set up. A JVM check does not prove Android compilation, a CI build does not prove behavior on a phone, and a debug APK does not prove release signing. State which checks actually ran. Use [DEVICE_TESTS.md](DEVICE_TESTS.md) for device acceptance.
 
 ## Distribution boundary
 

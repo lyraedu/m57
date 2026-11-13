@@ -31,6 +31,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
+          sh scripts/check-jvm.sh
           python3 -m unittest discover -s scripts -p 'test_*.py'
           python3 scripts/check-release.py "$RELEASE_TAG"
       - name: Restore and verify established signing key
@@ -51,7 +52,7 @@ jobs:
           packages: platform-tools
       - uses: gradle/actions/setup-gradle@v4
       - name: Install Android SDK
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
       - name: Test, lint and build debug variant
         env:
           M57_SOURCE_REF: ${{ github.sha }}
@@ -63,7 +64,7 @@ jobs:
           M57_STORE_PASSWORD: ${{ secrets.M57_STORE_PASSWORD }}
           M57_KEY_ALIAS: ${{ secrets.M57_KEY_ALIAS }}
           M57_KEY_PASSWORD: ${{ secrets.M57_KEY_PASSWORD }}
-        run: ./gradlew :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --no-daemon
+        run: ./gradlew :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease :app:bundleRelease --no-daemon --max-workers=2
       - name: Verify signature and package corresponding source
         env:
           RELEASE_TAG: ${{ github.ref_name }}
