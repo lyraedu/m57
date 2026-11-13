@@ -10,6 +10,15 @@
     <string name="password_mismatch">That password did not match. Please try again.</string>
     <string name="password_save_failed">Your password could not be saved. Please try again.</string>
     <string name="password_operation_failed">The password check could not finish. Please try again.</string>
+    <string name="password_length_progress">%1$d of 12 minimum characters</string>
+    <string name="password_length_ready">✓ Length ready · %1$d characters</string>
+    <string name="password_too_long">%1$d characters · keep it within 128</string>
+    <string name="password_phrase_tip">A few unrelated words make a phrase easier to remember.</string>
+    <string name="password_basic_checks_ready">Basic checks met. Keep this phrase unique and private.</string>
+    <string name="password_confirmation_prompt">Type it again to confirm.</string>
+    <string name="password_confirmation_typing">Keep typing · the confirmation matches so far.</string>
+    <string name="password_confirmation_ready">✓ Your passwords match. Ready to save.</string>
+    <string name="password_confirmation_not_yet">These do not match yet. Check both entries.</string>
     <string name="app_name">M57</string>
     <string name="accessibility_description">M57 uses accessibility locally to recognise app identities, supported browser address bars, selected screen controls, and Settings labels. It displays boundary screens for your chosen focus apps, routines, daily limits and supported short-video viewers. Optional family rules cover listed websites in supported browsers. Optional Lyra redirection opens supported AI surfaces in your configured Lyra destination. If you explicitly enable the settings guard, detected M57 App info and accessibility pages return to M57 for authorised access. M57 does not read message bodies, save browsing history or video content, or upload accessibility data. Daily limits separately need usage access. The service runs focus checks while connected; Android may stop it or revoke permissions. Coverage depends on app versions, visible controls and device layouts. Enable only if you agree to this access.</string>
     <string name="widget_title">Make a little room.</string>

@@ -89,7 +89,7 @@ class PageShell @JvmOverloads constructor(activity: Context, tab: AdminTab? = nu
     }
 
     private fun updateContentPadding() {
-        val occupied = if (keyboard) 0 else maxOf(dock?.height ?: 0, footer?.height ?: 0)
+        val occupied = if (keyboard) footer?.height ?: 0 else maxOf(dock?.height ?: 0, footer?.height ?: 0)
         val bottom = occupied + LyraUi.dp(context, if (occupied > 0) 36 else 24)
         content.setPadding(LyraUi.dp(context, 24), LyraUi.dp(context, 24), LyraUi.dp(context, 24), bottom)
     }

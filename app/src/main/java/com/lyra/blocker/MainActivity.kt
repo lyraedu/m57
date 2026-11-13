@@ -540,6 +540,7 @@ class MainActivity : Activity() {
     }
 
     private fun passwordField(label: String) = LyraUi.field(EditText(this)).apply {
+        id = View.generateViewId()
         hint = label
         setSingleLine(true)
         inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
@@ -554,7 +555,16 @@ class MainActivity : Activity() {
         setBack { showHome() }
         title(page, "Parent controls.", "Enter the private password for the person looking after this phone.")
         val field = passwordField("Parent or administrator password")
+        page.addView(LyraUi.text(this, "Your private password", 14f, bold = true).apply { labelFor = field.id })
         page.addView(field)
+        val reveal = CheckBox(this).apply {
+            text = "Show password"; minHeight = LyraUi.dp(this@MainActivity, 48); setTextColor(LyraUi.muted)
+            setOnCheckedChangeListener { _, checked ->
+                val position = field.selectionStart.coerceAtLeast(0)
+                field.transformationMethod = if (checked) null else android.text.method.PasswordTransformationMethod.getInstance()
+                field.setSelection(position.coerceAtMost(field.length()))
+            }
+        }; page.addView(reveal)
         val feedback = ActionFeedback(this)
         page.addView(feedback)
         lateinit var submit: Button
@@ -579,7 +589,7 @@ class MainActivity : Activity() {
             if (value.isEmpty()) { field.error = getString(R.string.password_enter); return@button }
             if (credentialBusy) { feedback.show(getString(R.string.password_previous_check)); return@button }
             field.text.clear()
-            backgroundWork(submit, feedback, getString(R.string.password_checking), listOf(field), { store.verifyCredential(value) }) { valid ->
+            backgroundWork(submit, feedback, getString(R.string.password_checking), listOf(field, reveal), {}, { store.verifyCredential(value) }) { valid ->
                 if (valid) {
                     unlocked = true
                     val destination = pendingAdminPage ?: AdminPage.OVERVIEW
@@ -589,7 +599,7 @@ class MainActivity : Activity() {
                 else { feedback.show(getString(R.string.password_mismatch), error = true); field.error = getString(R.string.password_mismatch) }
             }
         }
-        page.addView(submit)
+        visibleShell?.setFooter(LyraUi.column(this, 0).apply { addView(submit) })
         field.imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
         field.setOnEditorActionListener { _, action, _ ->
             if (action == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) { if (submit.isEnabled) submit.performClick(); true } else false
@@ -607,20 +617,15 @@ class MainActivity : Activity() {
         title(page, "Keep the controls with you.", "Choose a private phrase with at least 12 characters. Write down a safe copy; there is no password reset in this version.")
         val first = passwordField("Administrator password")
         val second = passwordField("Confirm password")
-        page.addView(first); page.addView(second)
-        val feedback = ActionFeedback(this).apply { show("12–128 characters · spaces and passphrases supported") }
+        page.addView(LyraUi.text(this, "Choose your private phrase", 14f, bold = true).apply { labelFor = first.id })
+        page.addView(first)
+        page.addView(LyraUi.text(this, "Type the same phrase again", 14f, bold = true).apply { labelFor = second.id })
+        page.addView(second)
+        val checklist = PassphraseChecklist(this); page.addView(checklist)
+        val feedback = ActionFeedback(this)
         page.addView(feedback)
-        first.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun afterTextChanged(s: Editable?) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val value = s?.toString().orEmpty()
-                if (!credentialBusy) feedback.show(PasswordCredential.problem(value) ?: if (value.codePointCount(0, value.length) >= 20)
-                    "Good length. Make it unique and hard to guess." else "Meets the minimum. A longer, unique passphrase is even better.")
-            }
-        })
         val reveal = CheckBox(this).apply {
-            text = "Show passwords"; setTextColor(LyraUi.muted)
+            text = "Show passwords"; minHeight = LyraUi.dp(this@MainActivity, 48); setTextColor(LyraUi.muted)
             setOnCheckedChangeListener { _, checked ->
                 listOf(first, second).forEach { field ->
                     val position = field.selectionStart.coerceAtLeast(0)
@@ -635,6 +640,16 @@ class MainActivity : Activity() {
             addView(LyraUi.text(this@MainActivity, "Do not forget this password or share it with the child. Keep a private copy somewhere safe. Online assisted recovery is still being designed and is not available in this build.", 14f, LyraUi.muted))
         })
         lateinit var submit: Button
+        fun updateForm() {
+            val value = first.text.toString()
+            val repeated = second.text.toString()
+            checklist.update(value, repeated)
+            val ready = !credentialBusy && PasswordCredential.problem(value) == null && value == repeated
+            val newlyReady = ready && !submit.isEnabled
+            submit.isEnabled = ready
+            submit.alpha = if (ready || credentialBusy) 1f else .55f
+            if (newlyReady) Motion.enter(submit)
+        }
         submit = LyraUi.button(this, "Save administrator password") {
             if (store.hasPassword && !unlocked) return@button
             if (credentialBusy) { feedback.show(getString(R.string.password_previous_check)); return@button }
@@ -644,24 +659,37 @@ class MainActivity : Activity() {
                 problem != null -> first.error = problem
                 value != second.text.toString() -> second.error = "Both passwords need to match."
                 else -> {
-                    first.text.clear(); second.text.clear()
-                    backgroundWork(submit, feedback, getString(R.string.password_saving), listOf(first, second, reveal), { PasswordCredential.create(value) }) { hash ->
+                    backgroundWork(submit, feedback, getString(R.string.password_saving), listOf(first, second, reveal), { updateForm() }, { PasswordCredential.create(value) }) { hash ->
                         runCatching { store.savePassword(hash); store.consent() }.onSuccess {
                             unlocked = true; navigate(if(store.setupComplete)AdminPage.OVERVIEW else AdminPage.SETUP)
                         }.onFailure { feedback.show(getString(R.string.password_save_failed), error = true) }
                     }
+                    first.text.clear(); second.text.clear()
                 }
             }
         }
-        page.addView(submit)
+        visibleShell?.setFooter(LyraUi.column(this, 0).apply { addView(submit) })
+        val watcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun afterTextChanged(s: Editable?) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (!credentialBusy) { first.error = null; second.error = null; updateForm() }
+            }
+        }
+        first.addTextChangedListener(watcher); second.addTextChangedListener(watcher)
+        updateForm()
         second.imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
         second.setOnEditorActionListener { _, action, _ ->
-            if (action == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) { if (submit.isEnabled) submit.performClick(); true } else false
+            if (action == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                if (submit.isEnabled) submit.performClick()
+                else if (!credentialBusy) feedback.show(PasswordCredential.problem(first.text.toString()) ?: getString(R.string.password_confirmation_not_yet), error = true)
+                true
+            } else false
         }
     }
 
     /** Compute slowly off-thread; page/lifecycle changes invalidate results before any password save. */
-    private fun <T> backgroundWork(button: Button, feedback: ActionFeedback, caption: String, fields: List<View>, work: () -> T, after: (T) -> Unit) {
+    private fun <T> backgroundWork(button: Button, feedback: ActionFeedback, caption: String, fields: List<View>, onIdle: () -> Unit, work: () -> T, after: (T) -> Unit) {
         val current = generation
         val idleCaption = button.text
         credentialBusy = true
@@ -679,6 +707,7 @@ class MainActivity : Activity() {
                 button.isEnabled = true
                 button.text = idleCaption
                 fields.forEach { it.isEnabled = true }
+                onIdle()
                 result.onSuccess(after).onFailure { feedback.show(getString(R.string.password_operation_failed), error = true) }
             }
         }
