@@ -26,6 +26,13 @@ as provided by those sections. This is not a relicensing of Curbox's copyright.
 - Existing Lyra logo/launcher PNG copies: retained GPL-3.0-only terms for these
   bundled copies; no trademark rights are granted.
 - Other original M57 configuration, resources, tests and docs: AGPL-3.0-only.
+- Sora variable font: SIL Open Font License 1.1, Copyright 2019 The Sora Project
+  Authors. `LICENSES/OFL-Sora.txt` and the in-app `OFL-Sora.txt` preserve its terms.
+  Original font source: https://github.com/google/fonts/tree/main/ofl/sora.
+- Owner-supplied 13 November artwork in `branding/source/`, its generated
+  adaptive/legacy/themed icons and replacement in-app ring: AGPL-3.0-only.
+  These replace the earlier launcher copies; their source digests and
+  regeneration instructions are in `branding/README.md`.
 - StevenBlack aggregator MIT license: preserved verbatim in
   LICENSES/MIT-StevenBlack.txt and app assets/StevenBlack-MIT.txt. Credit:
   Steven Black and the StevenBlack/hosts contributors,

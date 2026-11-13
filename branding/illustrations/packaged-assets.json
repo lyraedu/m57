@@ -1,0 +1,114 @@
+[
+  {
+    "name": "attention-garden",
+    "source_sha256": "20bb28028d09bf4b07f0290c18f71fcfc885396ff39a3a2cd476bcbb13c64c68",
+    "asset_sha256": "0dec61a247a68897f077f645ae9d0144df5a70ae16d01d65e2ba753a38b7bd0d",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "personal-controls",
+    "source_sha256": "33b2058a55798809d5fee0f7405ad7acb8df323e81458bf6df5927682e842bc4",
+    "asset_sha256": "c5ed62fd670b957cd3eefc0820373ede9271bdbf8e299ff6549ee31a4c97f8c8",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "learning-detour",
+    "source_sha256": "a56fff6da751e96ffd5002181379671467f8c3ce551846abe410a0a219c0f6df",
+    "asset_sha256": "e23ce2451f99fd8f2359120c03ef142121c07c4b6b005c1dc6c6c75eb76aa7c7",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "one-thing",
+    "source_sha256": "0a97ccbe787fe613a4f78e104c476194c13abb19815eb6936a07b784baec4239",
+    "asset_sha256": "3fa9438bc8689e1971252a500f32635f297e8fd778354435ac496f8d6e88ad21",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "take-a-breath",
+    "source_sha256": "04577ae0308db92d2aa6aea4afa9f5bffe459436e1a9167e4262c3df1fe0414d",
+    "asset_sha256": "3d5672483c4fa2fae9b324c5713ce6537749d1b2cce122858748369036f098ce",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "short-video-choice",
+    "source_sha256": "e7523a24db291555ef8dd2a25d4a21a66721028b6355689fce42e52c086b60c9",
+    "asset_sha256": "9fe22f5166f6893d17d19e5303304f5b763660f15e2be2574030da57b0ef5026",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "daily-allowance",
+    "source_sha256": "6b6c1dd5ffdd526e6c1e554805166474ee4d5b473e9832db697de683d2a93bb6",
+    "asset_sha256": "79222859fd4b35ec5c6c05377803d534b16af5fd7276de41b2dc31bc802bbfdd",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "routine-rhythm",
+    "source_sha256": "48f7022716a167027a6608698c985aeb6d096cfb351f826383924e34e881589a",
+    "asset_sha256": "689eda38892afec6b17fae348b4e6d99d3b84584c64c15b5860b28ff824d7fb9",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "browsing-boundaries",
+    "source_sha256": "ed8d07caf8421a14bd482019bb31539e89c552b746eb5864b775932cd9570518",
+    "asset_sha256": "0bee238b72fe664f2c2cc7f39c7fb3aee834d0033fd5b41162b193531cd80833",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "permission-window",
+    "source_sha256": "98140627a86a40236284969742c31bc18b5d16aca010fd10f8e2d25fe346835a",
+    "asset_sha256": "6e061368024de9e807741be574f77c903d2d58c63a34d8a67c7350747bb674d8",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "local-history",
+    "source_sha256": "afca93fdcf0f032dfc37be3a917bcab6ae0e83a655a8512a3d1cb816e635c5b0",
+    "asset_sha256": "ff4e69bc16bff66c5e150e940ba9006c3deacab00ef75d27bf503ae0c8b660a6",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "privacy-drawer",
+    "source_sha256": "c02637c1e119194a306e1b5220ecb611eb835c210d499a0bf8901b7f073879eb",
+    "asset_sha256": "520c522c9832d7a01efaf0c01f3a25cbf5a9de1f410b3471e428c10f300d37d3",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "commitment-ribbon",
+    "source_sha256": "6090e26a8448664ccf2cfca7047a3564cd6b645bdc37f8e462c02a8f04f83cdd",
+    "asset_sha256": "8b9a27ba7316923aab14dbffe19f49f60d33fd6e9202a3079bb2a4387efc0478",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "small-goal",
+    "source_sha256": "b3a9a0e91228c4c39d25b2a916ddc5950f910498685d46f69011a8cb1f0569b2",
+    "asset_sha256": "ac197574c76818928ce5b7159ff5bb2e2368a883e601b754921ada3f28340301",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "ready-for-your-day",
+    "source_sha256": "24cefb027bc67003567a7b6b838ed7c5d52122b54f9cd56ab55f21099c740e2c",
+    "asset_sha256": "f67eba40571e9d8d73f097938549d90b3f89b5f3643bca3be262561c653edf34",
+    "width": 960,
+    "height": 640
+  },
+  {
+    "name": "first-page",
+    "source_sha256": "bd99f3440557bb678a1400f50bdd0d0d3d794328c1c507375cc954529ff49a1e",
+    "asset_sha256": "8282fe1acb2bcaaf3cbc84595026d5ae9f9c01d87937037a8435a4c3c39904a3",
+    "width": 960,
+    "height": 640
+  }
+]

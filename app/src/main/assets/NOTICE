@@ -74,3 +74,12 @@ GPL/AGPL terms. Full-screen interventions, source-aware PWA handoff and resumabl
 setup are original M57 work. Signed tag releases carry the exact corresponding
 source and certificate/checksum metadata. Recovery is excluded. Android build,
 live-network and Samsung device acceptance remain outstanding.
+
+Development work on 13 November 2026 adds original M57 personal onboarding,
+focus clocks, recurring routines, local usage estimates/limits, history/export,
+animated native guides and a focus widget. These additions are AGPL-3.0-only;
+the existing mixed and inherited source keeps its prior notices. The owner also
+supplied new foreground, background and complete icon artwork. Its originals,
+digests, adaptive/themed derivatives and regeneration steps are in branding/.
+The 13 November launcher assets and replacement in-app ring use AGPL-3.0-only.
+Implementation and validation evidence is in docs/implementation-2026-11-13.md.
