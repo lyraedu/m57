@@ -8,6 +8,10 @@ import java.util.Set;
 public final class FocusChecks {
     public static void main(String[] args) { run(); System.out.println("Focus, routine, domain and usage checks passed"); }
     public static void run() {
+        check(FocusPolicy.editingAllowed(true, true, true), "Child commitment blocked authenticated parent edits");
+        check(!FocusPolicy.editingAllowed(false, true, true), "A child acquired parent edit authority");
+        check(!FocusPolicy.editingAllowed(true, false, true), "Personal commitment allowed early boundary edits");
+        check(FocusPolicy.editingAllowed(true, false, false), "Ordinary personal settings were locked");
         long minute = 60_000;
         var focus = FocusClock.state("pomodoro", 24 * minute, 25 * minute, 5 * minute, 4);
         check(focus.phase().equals("focus") && focus.remaining() == minute && focus.focused() == 24 * minute, "Focus phase drifted");

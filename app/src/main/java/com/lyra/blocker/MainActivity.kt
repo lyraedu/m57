@@ -203,7 +203,8 @@ class MainActivity : Activity() {
         if (!unlocked || (store.familyManaged && !store.hasPassword)) { lockAndHome(); return }
         val focus = FocusStore(this)
         val session = focus.session
-        if (!store.familyManaged && session != null && session.strict && !focus.state(session).finished()) {
+        val committed = session != null && session.strict && !focus.state(session).finished()
+        if (!FocusPolicy.editingAllowed(unlocked, store.familyManaged, committed)) {
             toast("Protection settings return when your commitment session ends.")
             personalPages.show("Focus")
             return

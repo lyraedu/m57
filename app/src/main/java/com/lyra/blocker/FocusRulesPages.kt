@@ -22,6 +22,7 @@ import java.util.concurrent.Executors
 /** Configuration UI. All writes recheck authority and any active commitment. */
 class FocusRulesPages(private val activity: Activity, private val authorised: () -> Boolean, private val navigate: (AdminPage) -> Unit) {
     private val store = FocusStore(activity)
+    private val protection = ProtectionStore(activity)
     private val limits = AppLimitStore(activity)
     private val worker = Executors.newSingleThreadExecutor()
     private var generation = 0
@@ -31,7 +32,8 @@ class FocusRulesPages(private val activity: Activity, private val authorised: ()
     private fun canEdit(): Boolean {
         if (!authorised()) return false
         val s = store.session
-        if (s != null && s.strict && !store.state(s).finished()) { toast("This commitment session must finish before changing focus boundaries"); return false }
+        val committed = s != null && s.strict && !store.state(s).finished()
+        if (!FocusPolicy.editingAllowed(true, protection.familyManaged, committed)) { toast("This commitment session must finish before changing focus boundaries"); return false }
         return true
     }
     private fun heading(page: LinearLayout, title: String, detail: String) {
