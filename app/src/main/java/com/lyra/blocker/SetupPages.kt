@@ -1,86 +1,96 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.lyra.blocker
 
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.Activity
 import android.app.admin.DevicePolicyManager
 import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.provider.Settings
-import android.view.accessibility.AccessibilityManager
 import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.Switch
 
-/** Resumable permission guidance. Returning from system settings requires re-unlocking. */
-class SetupPages(private val activity:Activity,private val authorised:()->Boolean,private val navigate:(AdminPage)->Unit){
-    private val store=ProtectionStore(activity)
-    private fun accessible()=activity.getSystemService(AccessibilityManager::class.java)
-        .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-        .any{it.resolveInfo.serviceInfo.packageName==activity.packageName}
-    private fun open(intent:Intent){if(authorised())runCatching{store.allowAppInfoAccess();activity.startActivity(intent)}}
-    private fun next(){if(authorised()){store.setupStep=(store.setupStep+1).coerceAtMost(3);navigate(AdminPage.SETUP)}}
-    fun show(page:LinearLayout){
-        val step=store.setupStep
-        page.addView(LyraUi.badge(activity,"SETUP · ${step+1} OF 4"))
-        page.addView(LyraUi.text(activity,listOf("Give learning a little space.","Let M57 stay ready.","Make removal intentional.","Your space is nearly ready.")[step],31f,bold=true))
-        page.addView(LyraUi.text(activity,"Administrator password is set. Keep it private and do not share it with the child.",14f,LyraUi.muted))
-        when(step){
-            0->{
-                page.addView(LyraUi.text(activity,"Accessibility lets M57 recognise supported AI, video and settings screens and display its interventions. Messages and video content are not saved. Screen prompts use this access; a separate draw-over-apps permission is not needed.",15f,LyraUi.muted))
-                page.addView(LyraUi.badge(activity,if(accessible())"ACCESSIBILITY ENABLED" else "ACCESS NEEDED"))
-                page.addView(LyraUi.button(activity,"Open M57 accessibility settings"){
-                    store.consent();open(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+/** Parent-authorised permission guidance. Permission return never restores administrator authority. */
+class SetupPages(private val activity: Activity, private val authorised: () -> Boolean,
+    private val navigate: (AdminPage) -> Unit, private val footer: (LinearLayout) -> Unit) {
+    private val store = ProtectionStore(activity)
+    private val stories = PermissionStories(activity, authorised) { navigate(AdminPage.SETUP) }
+    private fun advance() { if (authorised()) { store.setupStep = (store.setupStep + 1).coerceAtMost(6); navigate(AdminPage.SETUP) } }
+    fun show(page: LinearLayout) {
+        val step = store.setupStep
+        page.addView(ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal).apply {
+            max = 7; setProgress(step + 1, Motion.enabled(activity)); progressTintList = android.content.res.ColorStateList.valueOf(LyraUi.moss)
+            contentDescription = "Android access step ${step + 1} of 7"
+        })
+        page.addView(LyraUi.badge(activity, "ANDROID ACCESS & YOUR CHOICES · ${step + 1}/7", LyraUi.mossInk, LyraUi.mossSoft))
+        when (step) {
+            0 -> stories.accessibility(page)
+            1 -> stories.usage(page)
+            2 -> stories.background(page)
+            3 -> stories.notifications(page)
+            4 -> stories.openSource(page)
+            5 -> strict(page)
+            else -> {
+                Illustrations.addTo(page, "ready-for-your-day", 180)
+                page.addView(LyraUi.text(activity, "A little space.\nReady when you are.", 30f, bold = true).apply { isAccessibilityHeading = true })
+                page.addView(LyraUi.text(activity, "Your timer is ready. Other tools follow the access and boundaries you choose; Home shows what is actually connected.", 16f, LyraUi.muted))
+                page.addView(SummaryTiles(activity, listOf(
+                    SummaryMetric("Screen controls", if (stories.accessible() && LyraAccessibilityService.connected) "Connected" else "Needs access", "Apps, videos and supported addresses", M57Icon.SHIELD, true),
+                    SummaryMetric("App-time insights", if (stories.usageReady()) "Ready" else "Optional", "Local estimates and daily limits", M57Icon.INSIGHTS)
+                )))
+                page.addView(LyraUi.card(activity).apply {
+                    addView(LyraUi.feature(activity, "◇", "Website filtering has its own choice", "Choose categories or a DNS provider in browsing controls. Android asks for VPN approval there, only if you use the local DNS filter."))
                 })
-                page.addView(LyraUi.text(activity,"If Android says restricted settings are blocked, open App info, use its menu to allow restricted settings, then return to Accessibility. Leaving this app locks admin controls; unlock again to continue here.",14f,LyraUi.muted))
-                page.addView(LyraUi.button(activity,"Open App info for restricted settings",false){open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${activity.packageName}")))})
-                page.addView(LyraUi.button(activity,"Find help for this phone",false){
-                    val query="How to allow restricted settings accessibility ${Build.MANUFACTURER} ${Build.MODEL} Android ${Build.VERSION.RELEASE}"
-                    open(Intent(Intent.ACTION_VIEW,Uri.parse("https://www.youtube.com/results").buildUpon().appendQueryParameter("search_query",query).build()))
-                })
-                page.addView(LyraUi.button(activity,"Continue"){
-                    if(accessible())next() else android.widget.Toast.makeText(activity,"Enable M57 accessibility first",android.widget.Toast.LENGTH_SHORT).show()
-                })
-            }
-            1->{
-                val guide=BackgroundHelp.forDevice(Build.MANUFACTURER,Build.BRAND)
-                page.addView(LyraUi.text(activity,"Some phones stop apps in the background. Review Android's battery access and the manufacturer's startup controls. These improve reliability but do not make the service impossible to stop.",15f,LyraUi.muted))
-                if(guide!=null){
-                    page.addView(LyraUi.badge(activity,if(BackgroundAccess.isExempt(activity))"BATTERY EXEMPTION ALLOWED" else "BATTERY ACCESS TO REVIEW"))
-                    page.addView(LyraUi.button(activity,"Allow background running"){if(authorised()){store.allowAppInfoAccess();BackgroundAccess.requestExemption(activity)}})
-                    page.addView(LyraUi.button(activity,"${guide.manufacturer} startup settings",false){if(authorised()){store.allowAppInfoAccess();BackgroundAccess.openManufacturerSettings(activity,guide.vendor)}})
-                    val extra=LyraUi.column(activity,0).apply{visibility=android.view.View.GONE}
-                    page.addView(LyraUi.link(activity,"Troubleshooting guide  +"){extra.visibility=if(extra.visibility==android.view.View.VISIBLE)android.view.View.GONE else android.view.View.VISIBLE})
-                    extra.addView(LyraUi.text(activity,guide.url,13f,LyraUi.muted))
-                    extra.addView(LyraUi.button(activity,"Open manufacturer guide",false){open(Intent(Intent.ACTION_VIEW,Uri.parse(guide.url)))})
-                    page.addView(extra)
-                }else page.addView(LyraUi.text(activity,"No manufacturer-specific helper is configured for this phone. You can review battery settings in Android.",14f,LyraUi.muted))
-                page.addView(LyraUi.button(activity,"Continue with current battery settings"){next()})
-            }
-            2->{
-                val manager=activity.getSystemService(DevicePolicyManager::class.java)
-                val active=manager.isAdminActive(ManagedProtection.component(activity))
-                page.addView(LyraUi.text(activity,"Optional administrator access adds a deactivation step before uninstalling M57. On a normal personal phone, Android can still revoke permissions or remove the app; this is not guaranteed uninstall protection. Managed school devices have stronger controls through intentional device-owner enrolment.",15f,LyraUi.muted))
-                page.addView(LyraUi.badge(activity,if(active)"ADMINISTRATOR ACCESS ENABLED" else "OPTIONAL STEP"))
-                page.addView(LyraUi.button(activity,"Add removal protection"){
-                    open(Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply{
-                        putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,ManagedProtection.component(activity))
-                        putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,"Add a confirmation step before removing M57. No wipe or lock policies are requested.")
-                    })
-                })
-                page.addView(LyraUi.button(activity,if(active)"Continue" else "Continue without removal protection",false){next()})
-            }
-            else->{
-                page.addView(LyraUi.text(activity,"Choose which AI apps, video spaces and family website categories to protect. Family VPN and browser controls are separate and stay off until configured. Every setting remains available in your administrator space.",15f,LyraUi.muted))
-                page.addView(LyraUi.text(activity,"M57 is open source so anyone can inspect, vet and report problems in the code. Source access supports review; it does not replace device testing or promise perfect protection.",15f,LyraUi.muted))
-                page.addView(LyraUi.link(activity,"Inspect this build’s source") {
-                    if(authorised()){store.allowAppInfoAccess();activity.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(BuildConfig.SOURCE_URL)))}
-                })
-                page.addView(LyraUi.button(activity,"Finish setup"){
-                    if(!authorised())return@button
-                    if(!accessible()){store.setupStep=0;navigate(AdminPage.SETUP)}else{store.setupComplete=true;navigate(AdminPage.OVERVIEW)}
-                })
+                page.addView(LyraUi.text(activity, "Review any of these pages later from Settings. Optional access can be declined without losing the timer or the rest of your choices.", 14f, LyraUi.muted))
             }
         }
-        if(step>0)page.addView(LyraUi.link(activity,"Previous step"){if(authorised()){store.setupStep=step-1;navigate(AdminPage.SETUP)}})
+        val waiting = when (step) {
+            0 -> !stories.accessible()
+            1 -> !stories.usageReady()
+            2 -> !BackgroundAccess.isExempt(activity)
+            3 -> !stories.notificationsReady()
+            else -> false
+        }
+        val actions = LyraUi.column(activity, 0)
+        actions.addView(LyraUi.button(activity, if (step == 6) if (stories.accessible()) "Finish setup" else "Continue with the timer for now" else if (waiting) "Not now · continue" else "Continue") {
+            if (!authorised()) return@button
+            if (step == 6) { store.setupComplete = true; navigate(AdminPage.OVERVIEW) } else advance()
+        })
+        if (step > 0) actions.addView(LyraUi.link(activity, "Previous step") { if (authorised()) { store.setupStep = step - 1; navigate(AdminPage.SETUP) } })
+        footer(actions)
+    }
+    private fun strict(page: LinearLayout) {
+        Illustrations.addTo(page, "commitment-ribbon", 180)
+        page.addView(LyraUi.text(activity, "Make changes\nintentional.", 30f, bold = true).apply { isAccessibilityHeading = true })
+        if (!store.familyManaged) {
+            page.addView(LyraUi.text(activity, "Personal mode keeps Android’s controls available. You can choose a commitment timer when you want to finish a session before changing your personal focus boundaries.", 16f, LyraUi.muted))
+            return
+        }
+        page.addView(LyraUi.badge(activity, "STRICT MODE · SETTINGS GUARD", LyraUi.mossInk, LyraUi.mossSoft))
+        page.addView(LyraUi.text(activity, "An extra parent boundary can return recognised M57 App info and accessibility pages to the password screen. You can authorise 60 seconds of maintenance from Device access.", 16f, LyraUi.muted))
+        page.addView(Switch(activity).apply {
+            text = "Guard M57’s own settings pages"; minHeight = LyraUi.dp(activity, 64); setTextColor(LyraUi.ink); isChecked = store.settingsGuard
+            setOnCheckedChangeListener { _, enabled -> if (authorised()) store.settingsGuard = enabled else isChecked = store.settingsGuard }
+        })
+        page.addView(LyraUi.card(activity).apply {
+            addView(LyraUi.feature(activity, "♡", "What this preview covers", "Recognised M57 App info and accessibility detail pages. Other permission pages, VPN and installation guards are not yet complete in this preview."))
+        })
+        page.addView(LyraUi.text(activity, "This needs connected accessibility and depends on Android’s visible Settings layout. It is best-effort friction on a normal phone, not guaranteed uninstall prevention.", 14f, LyraUi.muted))
+        val manager = activity.getSystemService(DevicePolicyManager::class.java)
+        val active = manager.isAdminActive(ManagedProtection.component(activity))
+        page.addView(LyraUi.section(activity, "An extra removal step", "Optional Android administrator access adds a deactivation confirmation before uninstalling.", green = true))
+        page.addView(LyraUi.badge(activity, if (active) "ANDROID ADMINISTRATOR ENABLED" else "ANDROID ADMINISTRATOR OPTIONAL"))
+        page.addView(LyraUi.button(activity, if (active) "Review device access" else "Add the removal confirmation", false) {
+            if (!authorised()) return@button
+            if (active) { navigate(AdminPage.DEVICE_ACCESS); return@button }
+            store.allowAppInfoAccess(); activity.intent.putExtra(PermissionStories.RETURN_KEY, true)
+            val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, ManagedProtection.component(activity))
+                putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Add a confirmation step before removing M57. No wipe, lock or password policy is requested.")
+            }
+            runCatching { activity.startActivity(intent) }.onFailure {
+                activity.intent.removeExtra(PermissionStories.RETURN_KEY)
+                android.widget.Toast.makeText(activity, "This phone could not open administrator settings. You can continue without this optional step.", android.widget.Toast.LENGTH_LONG).show()
+            }
+        })
+        page.addView(LyraUi.text(activity, "Keep your parent password somewhere safe. Assisted recovery and expanded Strict guards still need completion and testing. This guide does not provision device ownership or lock the phone into managed mode.", 14f, LyraUi.muted))
     }
 }

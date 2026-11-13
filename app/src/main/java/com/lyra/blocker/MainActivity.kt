@@ -60,7 +60,7 @@ class MainActivity : Activity() {
     private val familyPages by lazy { FamilyPages(this, { unlocked }, { navigate(it) }, { requestFamilyVpn() }) }
     private val appRulesPages by lazy { AppRulesPages(this, { unlocked }) }
     private val mediaPages by lazy { MediaPages(this,{unlocked}) }
-    private val setupPages by lazy {SetupPages(this,{unlocked},{navigate(it)})}
+    private val setupPages by lazy { SetupPages(this, { unlocked }, { navigate(it) }, { visibleShell?.setFooter(it) }) }
     private var dialog: AlertDialog? = null
     private var backAction: (() -> Unit)? = null
     private var backRegistered = false
@@ -76,6 +76,8 @@ class MainActivity : Activity() {
         super.onResume()
         val guarded = intent.getBooleanExtra(SETTINGS_GUARD_EXTRA, false)
         intent.removeExtra(SETTINGS_GUARD_EXTRA)
+        val returnToSetup = intent.getBooleanExtra(PermissionStories.RETURN_KEY, false)
+        intent.removeExtra(PermissionStories.RETURN_KEY)
         val refreshBattery = returningFromBattery && unlocked
         returningFromBattery = false
         if (guarded) showSettingsGuardNotice()
@@ -84,6 +86,8 @@ class MainActivity : Activity() {
         else if (store.familyManaged && !store.hasPassword) showPasswordSetup(initialConsent = true)
         else if (intent.getBooleanExtra("m57.open_focus", false)) {
             intent.removeExtra("m57.open_focus"); personalPages.show("Focus")
+        } else if (returnToSetup) {
+            if (unlocked) navigate(AdminPage.SETUP) else requestAdmin(AdminPage.SETUP)
         } else showHome()
     }
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent) }
@@ -107,12 +111,13 @@ class MainActivity : Activity() {
         if (backRegistered) onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, backCallback)
     }
 
-    private fun page(destination: AdminPage? = null, personalTab: String? = null): LinearLayout {
+    private fun page(destination: AdminPage? = null, personalTab: String? = null, secure: Boolean = false): LinearLayout {
+        if (secure) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
         generation++
         refresh.removeCallbacksAndMessages(null)
         personalPages.stop()
         focusRulesPages.stop()
-        val shell = PageShell(this, destination?.tab, onTab = { tab ->
+        val shell = PageShell(this, if (destination == AdminPage.SETUP) null else destination?.tab, onTab = { tab ->
             navigate(when (tab) {
                 AdminTab.OVERVIEW -> AdminPage.OVERVIEW
                 AdminTab.CONTROLS -> AdminPage.CONTROLS
@@ -120,6 +125,7 @@ class MainActivity : Activity() {
             })
         }, customDock = personalTab?.let { PersonalDock(this, it) { next -> personalPages.show(next) } })
         setContentView(shell)
+        if (!secure) window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
         visibleShell = shell
         shell.requestApplyInsets()
         if (destination != null) {
@@ -161,9 +167,18 @@ class MainActivity : Activity() {
     }
 
     private fun requestAdmin(destination: AdminPage) {
+        if (destination == AdminPage.SETUP && store.setupComplete && store.setupStep == 6) store.setupStep = 0
         if (!store.familyManaged) { unlocked = true; navigate(destination); return }
         pendingAdminPage = destination
         askPassword()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != PermissionStories.NOTIFICATION_REQUEST || isDestroyed || isFinishing) return
+        intent.removeExtra(PermissionStories.RETURN_KEY)
+        if (!store.onboarded) onboardingPages.show()
+        else if (unlocked) navigate(AdminPage.SETUP) else requestAdmin(AdminPage.SETUP)
     }
 
     private fun showSettingsGuardNotice() {
@@ -548,7 +563,7 @@ class MainActivity : Activity() {
 
     private fun askPassword() {
         if (!store.hasPassword) { consentAndSetup(); return }
-        val page = page()
+        val page = page(secure = true)
         setBack { showHome() }
         title(page, "Parent controls.", "Enter the private password for the person looking after this phone.")
         val field = passwordField("Parent or administrator password")
@@ -609,7 +624,7 @@ class MainActivity : Activity() {
     private fun showPasswordSetup(initialConsent: Boolean = false) {
         if (store.hasPassword && !unlocked) { lockAndHome(); return }
         if (!store.hasPassword && !initialConsent) { consentAndSetup(); return }
-        val page = page()
+        val page = page(secure = true)
         setBack { if (store.hasPassword && unlocked) navigate(AdminPage.SETTINGS) else lockAndHome() }
         title(page, "Keep the controls with you.", "Choose a private phrase with at least 12 characters. Write down a safe copy; there is no password reset in this version.")
         val first = passwordField("Administrator password")

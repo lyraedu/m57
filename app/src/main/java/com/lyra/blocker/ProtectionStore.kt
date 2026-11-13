@@ -12,8 +12,8 @@ class ProtectionStore(context: Context) {
     val familyManaged: Boolean get() = prefs.getString("authority", "family") == "family"
     val onboarded: Boolean get() = prefs.getBoolean("onboarded", hasPassword)
     var onboardingStep: Int
-        get() = prefs.getInt("onboarding_step", 0).coerceIn(0, 5)
-        set(value) { prefs.edit().putInt("onboarding_step", value.coerceIn(0, 5)).apply() }
+        get() = prefs.getInt("onboarding_step", 0).coerceIn(0, 9)
+        set(value) { prefs.edit().putInt("onboarding_step", value.coerceIn(0, 9)).apply() }
     var draftFamily: Boolean
         get() = prefs.getBoolean("draft_family", false)
         set(value) { prefs.edit().putBoolean("draft_family", value).apply() }
@@ -26,14 +26,15 @@ class ProtectionStore(context: Context) {
         set(value) { prefs.edit().putBoolean("settings_guard", value).apply() }
     fun finishOnboarding() {
         check(!hasPassword) { "Existing administrator settings cannot be replaced by onboarding" }
+        check(authorityChosen) { "Choose personal or family authority first" }
         check(prefs.edit().putString("authority", if (draftFamily) "family" else "personal")
             .putBoolean("ai_enabled", draftLyra).putBoolean("settings_guard", false)
             .putBoolean("repo_guard", false).putBoolean("onboarded", true)
             .putBoolean("setup_complete", !draftFamily).putBoolean("consent", true).commit())
     }
     var setupStep:Int
-        get()=prefs.getInt("setup_step",0).coerceIn(0,3)
-        set(value){require(value in 0..3);prefs.edit().putInt("setup_step",value).apply()}
+        get()=prefs.getInt("setup_step",0).coerceIn(0,6)
+        set(value){require(value in 0..6);prefs.edit().putInt("setup_step",value).apply()}
     var setupComplete:Boolean
         get()=prefs.getBoolean("setup_complete",false)
         set(value){prefs.edit().putBoolean("setup_complete",value).apply()}

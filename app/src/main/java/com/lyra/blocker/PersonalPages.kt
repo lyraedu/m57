@@ -85,13 +85,15 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
         root.addView(LyraUi.link(activity, "How these controls work") { preview() })
     }
     private fun protectionSummary(root: LinearLayout) {
-        val connected = accessible() && LyraAccessibilityService.connected
+        val credentialReady = !store.familyManaged || store.hasPassword
+        val connected = credentialReady && accessible() && LyraAccessibilityService.connected
         val family = com.lyra.blocker.family.FamilyStore(activity)
         val rules = com.lyra.blocker.family.FamilyRepository.get(activity)
         val limits = AppLimitStore(activity).limits
         val enabledVideos = listOfNotNull("Shorts".takeIf { store.youtubeEnabled }, "Reels".takeIf { store.instagramEnabled })
         fun readiness(enabled: Boolean): String = when {
             !enabled -> "Off"
+            !credentialReady -> "Needs parent password"
             store.paused -> "Paused"
             !connected -> "Needs Android access"
             else -> "On"
@@ -99,6 +101,7 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
         root.addView(LyraUi.card(activity).apply {
             addView(LyraUi.badge(activity, if (accessible() && LyraAccessibilityService.connected) "ACCESSIBILITY CONNECTED" else "PROTECTION NEEDS ATTENTION"))
             addView(LyraUi.text(activity, when {
+                !credentialReady -> "Choose your parent password before screen controls can begin."
                 store.paused -> "Protection is paused."
                 !accessible() -> "The timer works. App protection needs Android access."
                 !LyraAccessibilityService.connected -> "Access is enabled. Waiting for Android to connect M57."
@@ -264,6 +267,7 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
         title(root, "Make it yours.", if (store.familyManaged) "Personal tools are yours. Protection settings belong to the administrator." else "Every control is included. No account or subscription required.")
         Illustrations.addTo(root, "privacy-drawer", 170)
         card(root, "◎", if (store.familyManaged) "Parent controls" else "Protection settings", "Short videos, browsing, optional Lyra, device access and pauses.") { admin(AdminPage.OVERVIEW) }
+        card(root, "♡", "Review setup & Android access", "Illustrated guides to app time, accessibility, background running, notifications and free, open-source software.") { admin(AdminPage.SETUP) }
         root.addView(Switch(activity).apply {
             text = "Reduce motion"; minHeight = LyraUi.dp(activity, 56); setTextColor(LyraUi.ink)
             val prefs = activity.getSharedPreferences("m57_experience", Activity.MODE_PRIVATE)
@@ -272,9 +276,7 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
         })
         card(root, "◉", "See what M57 does", "Interactive introductions to focus, scrolling and browsing.") { preview() }
         card(root, "◇", "Privacy on this phone", "Know what is stored, what permissions grant, and how to delete history.") {
-            dialog = AlertDialog.Builder(activity).setTitle("Your data, here")
-                .setMessage("M57 keeps settings, password hashes in family mode, routines, limits and up to 500 focus-session records in private app storage. Android backups are disabled.\n\nOptional usage access is processed locally; raw app-use events, messages, browser history and DNS queries are not stored by M57. Focus history exports are files you control.\n\nFamily-list updates contact the selected hosts sources. Optional Lyra redirection opens your configured HTTPS destination with a source-family hint and new-chat request.\n\nDelete focus history in Insights. Revoke optional permissions in Android Settings; administrator-managed devices may first need their administrator to release policies.")
-                .setPositiveButton("Close", null).show().also(LyraUi::styleDialog)
+            privacy()
         }
         root.addView(LyraUi.button(activity, "About M57", false) { UiLinks.about(activity) })
         root.addView(LyraUi.button(activity, "Source, build & licenses", false, licenses))
@@ -283,6 +285,28 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
             runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/lyraedu/m57/issues"))) }.onFailure { toast("Install a browser to open the issue tracker") }
         })
         root.addView(LyraUi.text(activity, "M57 ${BuildConfig.VERSION_NAME} · Android 14+\nOriginal code: AGPL-3.0-only. Inherited components retain their notices.", 12f, LyraUi.muted))
+    }
+    private fun privacy() {
+        val body = LyraUi.column(activity, 20)
+        Illustrations.addTo(body, "privacy-drawer", 160)
+        body.addView(LyraUi.badge(activity, "OPEN CODE · CLEAR CHOICES", LyraUi.mossInk, LyraUi.mossSoft))
+        body.addView(LyraUi.text(activity, "Your day stays\nwith you.", 28f, bold = true).apply { isAccessibilityHeading = true })
+        body.addView(LyraUi.text(activity, "M57 does not upload your app-use estimates, focus history or parent password. There are no ads or analytics SDKs in the app.", 16f))
+        body.addView(SummaryTiles(activity, listOf(
+            SummaryMetric("Usage & focus", "Local", "Processed on this phone", M57Icon.INSIGHTS, true),
+            SummaryMetric("Every included tool", "Free", "No paid switches or ads", M57Icon.FOCUS)
+        )))
+        body.addView(LyraUi.section(activity, "What stays here", "Settings, routines, limits, salted password hashes and up to 500 focus records live in private app storage. Android backups are disabled.", green = true))
+        body.addView(LyraUi.text(activity, "M57 does not keep raw app-use events, message bodies, a browser history or DNS query logs. You choose when to export focus history through Android’s document picker.", 14f, LyraUi.muted))
+        body.addView(LyraUi.section(activity, "Connections you choose", "M57 has Internet access for these explained features."))
+        body.addView(LyraUi.feature(activity, "◇", "Website-list updates", "Enabled lists download from their public sources, with scheduled refreshes. Those providers receive an ordinary download request."))
+        body.addView(LyraUi.feature(activity, "♡", "Your selected DNS provider", "The optional filter forwards permitted domain questions to your chosen resolver. Cloudflare receives these queries if you select it. Your app-time and focus history are not included."))
+        body.addView(LyraUi.feature(activity, "↗", "Links and optional Lyra", "Your browser or installed web app opens the website. A Lyra handoff includes only a source-family hint and a new-chat request."))
+        body.addView(LyraUi.section(activity, "The recipe is open", "Code is the recipe that makes an app work. M57 shares it so anyone can inspect what it does, suggest improvements and help fix problems.", green = true))
+        body.addView(LyraUi.text(activity, "Delete saved focus history in Insights. Files you exported stay under your control. Review permissions in Android; managed devices may first need their administrator to release policies.", 14f, LyraUi.muted))
+        dialog = AlertDialog.Builder(activity).setView(android.widget.ScrollView(activity).apply { addView(body) })
+            .setPositiveButton("Got it", null).setNeutralButton("Code & licenses") { _, _ -> licenses() }
+            .show().also(LyraUi::styleDialog)
     }
     private fun preview(index: Int = -1) {
         if (index < 0) {
