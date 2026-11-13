@@ -22,7 +22,14 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
-The debug APK is in `app/build/outputs/apk/debug/`. Signed releases follow the separate [release process](docs/releases.md).
+The debug APK is in `app/build/outputs/apk/debug/`. To build, update the connected
+phone and open the separate Preview while preserving its data:
+
+```sh
+bash scripts/preview-on-device.sh
+```
+
+Signed releases follow the separate [release process](docs/releases.md).
 
 ## Guides
 

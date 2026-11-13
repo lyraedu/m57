@@ -22,7 +22,7 @@ Latest instructions supersede the older exclusion of recovery: recovery is now r
 | UI-04: supplied ring replaces old foreground and in-app mark | **Source.** `branding/source/foreground.png` is the latest supplied transparent ring. Deterministic generator produces adaptive/background/monochrome layers, five density fallbacks, normal/round icons, in-app mark and system splash. | Mask simulations checked; actual Samsung/Pixel and other launcher/themed-icon checks remain. No universal OEM-shape claim. |
 | UI-05: use supplied desktop background and icon reference | **Source.** Originals retained in `branding/source`; complete reference is separate from adaptive layers. | Confirm installed icon with owner. |
 | UI-06: many original visual explainers | **Source.** Sixteen generated scenes, source PNGs and full prompts in `branding/illustrations`; optimized local WebP assets, worker decode and bounded cache; sixteen `FeatureGuide` lessons. | Contact sheet inspected; phone loading, memory and narrative comprehension still need acceptance. |
-| UI-07: expressive motion and smooth Focus | **Partial.** Press/ripple, page entrances, disclosures, dock transitions, focus orbit/ring, mode transitions and preset feedback. `Motion` respects system settings, reduced motion, battery saver and touch exploration. | Further running-session choreography, live power-setting changes, performance measurements and owner visual review. Lots of motion must not obscure controls or keep hidden screens busy. |
+| UI-07: expressive motion and smooth Focus | **Partial.** Press/ripple, page entrances, disclosures, dock transitions, focus orbit/ring, mode transitions and preset feedback. `Motion` respects system settings, reduced motion, battery saver and touch exploration. | Phase-colored session visuals, round markers and live power/animation/touch-exploration handling are implemented. Performance measurements and owner visual review remain. Lots of motion must not obscure controls or keep hidden screens busy. |
 | UI-08: readable sections with a little more color | **Source.** Shared section headings, moss/apricot icon tiles and Focus grouping; readable dark accent text instead of low-contrast brand text. | Contrast/large-text review on actual backgrounds; focus-field error placement and long translations. |
 | UI-09: About opens requested page | **Source.** `UiLinks.ABOUT` is `https://lyra-dev.vercel.app/m57`; separate native source/build/license route. | Verify browser opening and offline failure handling. |
 | SET-01 / M57.2, SETUP-01: resumable, understandable setup | **Source.** Six-step `OnboardingPages`, saved progress, sticky actions; separate parent password and existing permission sequence. | Process death, rotation, Android Settings return, Back and interrupted setup. Returning parent authority still requires password. |
@@ -118,7 +118,7 @@ Latest instructions supersede the older exclusion of recovery: recovery is now r
 | REL-01 / OSS-01–02: independent fully FOSS app | **Source.** Separate repository, native code, no ads/payment locks/account requirement; original AGPL terms and inherited GPL/other notices retained. | Full ownership/license inventory and dependency/source inspection for candidate. |
 | REL-02 / OSS-03,07: stable production package/signing/data | **Source.** Production ID unchanged; Preview isolated. Signing tools verify established certificate and exact source metadata. | Signed candidate upgrade on actual installed release with settings preserved. Installing Preview does not prove this. |
 | REL-03 / OSS-05: incremental commits and release pipeline | **Partial.** Tested core-policy commits exist; existing tag-based signed prerelease/source workflow remains. | Commit remaining coherent UI/runtime/assets/docs slices, expand and validate gates; no tag/publication authorized by this install request. |
-| REL-04 / OSS-06: Gradle tests, lint and both builds | **Partial.** JVM policy/release-tool checks have passed; earlier preview and debug/release assembly succeeded. A previous full gate failed a lint issue, since fixed. | Re-run current stable source: debug/release tests and lint, APKs, AAB and Preview. New source is not accepted by an earlier build. |
+| REL-04 / OSS-06: Gradle tests, lint and both builds | **Partial.** JVM policy/release-tool checks have passed; earlier preview and debug/release assembly succeeded. The latest full gate passed 33 tests per variant and assembled APKs/AAB, but failed a text-layout lint constant; that constant is now corrected. | Re-run current stable source: debug/release tests and lint, APKs, AAB and Preview. New source is not accepted by an earlier build. |
 | REL-05: CI/CD for regressions | **Partial.** Workflow now includes standalone policy checks, debug/release tests/lint/APKs, release bundle, separate Preview artifact and both lint reports. Signing checks are retained; SDK36 updates are in source. | Asset/metadata gates and Preview UI emulator flow still need expansion; hosted workflow execution is unverified. |
 | REL-06: phone/OEM acceptance and performance | **Open.** Owner authorized announced phone use; Preview install requested. | Run `DEVICE_TESTS.md`: actual apps/browsers, permission journeys, foreground/background, lock/reboot, networks, overlays, large text, TalkBack, reduced motion, cold start, memory/frame/battery measurements. No zero-edge-case claim. |
 | REL-07 / M57.9: Play/F-Droid preparation | **Partial.** Target/compile SDK36 and existing signing/source tooling. | Complete public/native privacy disclosures (including selected DNS-provider queries), store metadata/screenshots, current eligibility/build recipe, reproducibility and actual candidate acceptance. No submitted/approved listing claimed. |
@@ -140,7 +140,7 @@ The unspecified device-change request stays open for clarification.
 
 - AUTH-UX-01: password checking/saving needs immediate visible progress,
   disabled duplicate submission, a readable wrong-password/error state and
-  a clear cooldown. The installed Preview does not yet include this correction.
+  a clear cooldown. Source correction compiled and passed Preview lint; an updated APK installed and opened. A real password-flow acceptance check remains.
 - UI-10: inspect the supplied `~/Mindful` app and reuse components only where
   its actual licensing permits. The checked local revision is
   `b6eb68d500463c54e1127b6cc7ad540f02ae0c8e`; its GPL-2.0 file headers have
@@ -163,3 +163,11 @@ The unspecified device-change request stays open for clarification.
 ## Evidence for this audit
 
 Core-policy commits: `3ad236e` (focus, schedule, usage and AI boundaries) and `3778669` (resolver, browser-page and VPN capability policies). Artwork is committed as `2f25a4a`; the native UI/runtime is committed as `9a774fe`. The install/build result is recorded separately. Local verification and today's exact phone installation belong in [the implementation record](implementation-2026-11-13.md). [Device acceptance](../DEVICE_TESTS.md) remains a separate required gate. Rows stay open until the implementation and its required evidence exist.
+
+### Automatic local Preview updates
+
+The owner asked that every newly built Preview be installed on the connected
+phone and opened after the update. `scripts/preview-on-device.sh` now provides
+that sequence, preserving data/permissions and refusing the production package.
+Phone use is announced before it starts; it never unlocks the phone or grants
+permissions on the user's behalf.

@@ -90,5 +90,24 @@ signing continuity.
 The installed development APK was built from the runtime/artwork now committed
 in `9a774fe` and `2f25a4a`; its build-time `SOURCE_REF` was unset. It is not a
 source-stamped signed release candidate. Phone interaction/enforcement and
-production upgrade remain separate checks. The new full debug/release gate is
-running; record its result separately when complete.
+production upgrade remain separate checks. The full gate completed in 11m17s: 33 debug and 33 release unit tests
+passed; both APKs and the release bundle assembled, but debug/release lint
+failed a text-layout constant. The constant is now corrected to the SDK’s
+LineBreaker constant; the updated Preview build and lint passed in 5m03s. This failed gate is not
+reported as a pass.
+
+## Password feedback and visual update
+
+The next Preview update installed and opened successfully on the same Samsung
+phone, retaining Preview data and leaving production package identity unchanged.
+APK SHA-256: `7d44bfe6b0aee97e6cab23c223e673dc8d8619114e53f476de2c6d7b807ab3a5`.
+
+Added immediate inline working indicators for password verification/creation,
+duplicate-submission protection, persistent errors and cooldown-button countdown.
+New responsive summary tiles, focus/rest phase colors, a round index and shared
+readable sections extend the original M57 UI. Decorative focus motion responds
+to power, system animation and touch-exploration changes while attached.
+
+The [component record](ui-components.md) describes the supplied-code license
+boundary and original native implementations. New phone visual/password-flow
+acceptance remains distinct from the successful install/launch.
