@@ -192,3 +192,12 @@ The [retained wellbeing scope](wellbeing-tools.md) remains active. In particular
 phone-use summary notifications, the broader usage dashboard, expanded Strict
 coverage and further visual/device acceptance remain unfinished. Notification
 permission onboarding alone does not implement usage-summary notifications.
+
+## Preview installation after reconnection
+
+The Samsung SM-M135FU reconnected and the snapshot APK identified above was
+installed in place with `adb install -r`: Success. Activity Manager reported
+`Status: ok` and a cold launch of M57 Preview. Production version and install/
+update timestamps were compared before and after and remained unchanged.
+No app data was cleared or permissions granted. This confirms installation
+and launch, not full visual or enforcement acceptance.
