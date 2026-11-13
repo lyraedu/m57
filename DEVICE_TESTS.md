@@ -3,6 +3,98 @@
 These are required device checks, not results already observed. Run on an
 Android 14 phone/emulator and repeat core flows on the school’s OEM devices.
 
+## Personal-experience candidate, 13 November 2026
+
+These new source flows are unverified on a phone. The numbered historical
+checklist below remains relevant to the features/settings it describes; new
+personal onboarding and navigation supersede its old Home/setup expectations.
+Record the actual APK commit, phone, Android/OEM build, locale and app versions.
+
+- Fresh setup: resume every onboarding step after rotation, backgrounding and
+  process recreation. Choose personal or family authority. With Lyra off, verify
+  AI apps are usable and no AI handoff opens; enable it and repeat supported
+  app, Meta, browser and optional Google AI Mode boundaries. Ordinary Google
+  search and unselected AI Mode tabs must remain usable. Test localizations and
+  explicitly record unsupported variants.
+- Personal mode: no account/password prompt; timer works with accessibility
+  declined. Enabling access must agree with the disclosure, then Home must
+  distinguish configured permission from a connected service. Family mode must
+  finish password setup before any protection/admin control is considered ready.
+  Update an existing password installation and confirm credentials, cooldown,
+  selections, pause and maintenance behavior remain intact.
+- Timer/stopwatch/Pomodoro: check focus/break/round boundaries, short durations,
+  total eight-hour validation, screen lock, service/activity/process restart,
+  reboot, wall-clock changes and uncertain rollback recovery. Finish twice from
+  different surfaces and verify one history entry. A break must not pause family
+  DNS, video rules, daily limits or an overlapping routine.
+- Commitment mode: no early finish; personal protection settings and boundary
+  changes stay unavailable until completion. Stopwatch does not offer commitment.
+  Android system navigation, calls and deliberate OS permission/revocation paths
+  must remain available. Family administrator authority must not be acquired by
+  starting, finishing or exporting a personal session.
+- App picker: search, selection across queries, no matching apps, 60-row bound,
+  uninstalled apps, work profiles and changed default launcher/dialer. Never hold
+  M57, Settings, the active launcher or emergency calling. Check focus rules
+  immediately after edits and on reconnect, while preserving ordinary messaging
+  when only short-video surfaces are selected.
+- Websites: hold/allow subdomains, reject lookalikes, keep ordinary browser text
+  and URL editing usable. Study-site exceptions must not override family DNS or
+  browser rules. Record hidden URL, unsupported browser and whole-browser-list
+  limits. Test overlapping routine and timer scopes.
+- Usage/limits: explicitly agree, deny/revoke usage access, disable local
+  processing, cross local midnight/timezone/DST, screen off, switch activities,
+  split screen and fail/empty a query. Missing/stale/incomplete data must never
+  become fabricated limit enforcement. Measure actual sampling/overlay delay
+  and battery cost. Check all usage work stays off the UI thread.
+- Routines: selected weekdays, overnight tail/end exclusivity, overlapping
+  intervals, timezone/DST, disabled/deleted routines, device idle, reboot and
+  disconnected accessibility. Settings must describe the actual connection
+  requirement; no exact-alarm promise is made.
+- History: 500-record bound, completion/early end, seven-day view, end-day
+  crediting, JSON export/cancel/write failure, deletion and low-storage errors.
+  Check no passwords/settings or raw Android events enter the export. Already
+  exported files remain under the user's document-provider control.
+- UX: five personal tabs, three protected tabs, Android Back, keyboard, 320dp
+  width, landscape/tablet, 200% font scaling, TalkBack, battery saver, disabled
+  system animations and in-app Reduce motion. Verify previews explain controls,
+  do not trap gestures, and never claim to be enforcement tests.
+- Widget: add, resize, remove/re-add, open Focus, session completion, restart and
+  delayed Android updates. Its saved progress is a snapshot, not a live countdown.
+- Branding: compare circle/squircle/rounded/teardrop mask simulations with the
+  actual launchers on Samsung, Pixel, Xiaomi/Redmi/Poco, Oppo/OnePlus/Realme and
+  Vivo devices. Verify uncut ring, opaque edge, density scaling, themed icons,
+  badge placement, app drawer/folders, App info, recents and system splash.
+  Cold/warm starts must have no forced delay or duplicated splash Activity.
+
+## Observed Preview installation, 13 November 2026
+
+Current artifact: `0.6.4-preview`, code10, target36, package
+`com.lyra.blocker.preview`. Samsung SM-M135FU, Android14/API34. APK SHA-256:
+`d284a55eed9fbc5a0da570563544b576109dbaa5b84777da281620b836f40cb8`.
+
+Package installation returned Success and Activity Manager reported a successful
+cold launch. The checked Preview crash buffer had no recorded fatal exception.
+Production M57 version/install timestamps were unchanged; no production data
+clear, Android permission grant or managed enrollment occurred. This passes only
+installation/startup, not the new-flow visual/enforcement checklist above.
+See the [complete requirement audit](docs/feature-audit-2026-11-13.md) and
+[implementation record](docs/implementation-2026-11-13.md).
+
+A Preview-only walkthrough harness is available for an explicitly selected test
+device/emulator. It resets **only Preview**, never grants Android permissions,
+and checks the visible app before acting. It has been syntax-checked but its
+full walkthrough has not passed on the physical phone:
+
+```sh
+source ~/.config/m57/android-env.sh
+python3 scripts/device-smoke.py --serial DEVICE_SERIAL --reset-preview
+```
+
+Do not run this while the owner is reviewing Preview or has valuable Preview
+data. Real permission/enforcement acceptance is a separate manual flow.
+
+## Historical protection checklist
+
 Current 0.6.0 target: Samsung Galaxy M13 4G, One UI 6, English (UK). No checks
 below have yet been run on that device. Version 0.1–0.3 update checks are
 historical baselines; the current password-migration checks are listed below.

@@ -65,7 +65,7 @@ release APK is unsigned; signing and certificate verification stay separate.
 Full lint reports are under `app/build/reports/`. A failing check does not create
 or push a release tag.
 
-Use JDK 17, Android SDK platform 35 and build-tools 35.0.0. Set `ANDROID_HOME`
+Use JDK 17, Android SDK platform 36 and build-tools 35.0.0. Set `ANDROID_HOME`
 to the installed SDK. Run:
 
 ```sh
@@ -162,3 +162,12 @@ Modified network deployments must also meet the applicable AGPL source offer.
 
 The companion Lyra code is maintained in its own repository and is not included
 in this Android source archive. See [the handoff protocol](handoff.md).
+
+## Isolated development preview
+
+Build `:app:assemblePreview` to produce the separately installable
+`com.lyra.blocker.preview` app, labelled M57 Preview. It uses a debug certificate
+and preserves the stable app's data and permissions. Do not present it as an
+upgrade/signature-continuity test. The ordinary Android workflow now also builds
+the release bundle and uploads a separate Preview APK; hosted success must be
+checked in the actual Actions run. Store submission/publication is separate.
