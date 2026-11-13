@@ -30,20 +30,28 @@ object Illustrations {
     }
     private class SceneImage(context: Context, private val path: String) : ImageView(context) {
         private var generation = 0
-        init { scaleType = ScaleType.FIT_CENTER; importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO }
+        private var ambient: AmbientArtwork? = null
+        init { scaleType = ScaleType.FIT_CENTER; importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO; ambient = AmbientArtwork(this) }
         override fun onAttachedToWindow() {
             super.onAttachedToWindow()
             val ticket = ++generation
-            cache.get(path)?.let { setImageBitmap(it); return }
+            cache.get(path)?.let { setImageBitmap(it); ambient?.refresh(); return }
             val app = context.applicationContext
             worker.execute {
                 val bitmap = runCatching { app.assets.open(path).use { BitmapFactory.decodeStream(it) } }.getOrNull()
                 if (bitmap != null) {
                     cache.put(path, bitmap)
-                    post { if (isAttachedToWindow && generation == ticket) { setImageBitmap(bitmap); Motion.enter(this) } }
+                    post { if (isAttachedToWindow && generation == ticket) {
+                        setImageBitmap(bitmap)
+                        if (Motion.enabled(context)) { alpha = 0f; animate().alpha(1f).setDuration(240).start() }
+                        ambient?.refresh()
+                    } }
                 }
             }
         }
         override fun onDetachedFromWindow() { generation++; animate().cancel(); super.onDetachedFromWindow() }
+        override fun onWindowFocusChanged(hasWindowFocus: Boolean) { super.onWindowFocusChanged(hasWindowFocus); ambient?.refresh() }
+        override fun onWindowVisibilityChanged(visibility: Int) { super.onWindowVisibilityChanged(visibility); ambient?.refresh() }
+        override fun onVisibilityChanged(changedView: android.view.View, visibility: Int) { super.onVisibilityChanged(changedView, visibility); ambient?.refresh() }
     }
 }

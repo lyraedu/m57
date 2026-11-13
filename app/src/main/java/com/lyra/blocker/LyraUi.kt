@@ -164,7 +164,10 @@ object LyraUi {
         setTextColor(ink)
         setHintTextColor(muted)
         backgroundTintList = null
-        background = shape(soft, dp(context, 14).toFloat(), line)
+        background = android.graphics.drawable.StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_focused), shape(LyraUi.background, dp(context, 14).toFloat()).apply { setStroke(dp(context, 2), actionOrange) })
+            addState(intArrayOf(), shape(soft, dp(context, 14).toFloat()).apply { setStroke(dp(context, 1), muted) })
+        }
         setPadding(dp(context, 14), dp(context, 14), dp(context, 14), dp(context, 14))
         minimumHeight = dp(context, 52)
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(context, 10) }

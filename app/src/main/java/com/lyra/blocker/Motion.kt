@@ -11,10 +11,12 @@ object Motion {
     fun press(view: View) {
         if (!enabled(view.context)) return
         fun scale(value: Float) = android.animation.AnimatorSet().apply {
-            playTogether(android.animation.ObjectAnimator.ofFloat(view, View.SCALE_X, value), android.animation.ObjectAnimator.ofFloat(view, View.SCALE_Y, value)); duration = 120
+            playTogether(android.animation.ObjectAnimator.ofFloat(view, View.SCALE_X, value), android.animation.ObjectAnimator.ofFloat(view, View.SCALE_Y, value))
+            duration = if (value < 1f) 95 else 240
+            interpolator = if (value < 1f) android.view.animation.DecelerateInterpolator() else android.view.animation.OvershootInterpolator(.7f)
         }
         view.stateListAnimator = android.animation.StateListAnimator().apply {
-            addState(intArrayOf(android.R.attr.state_pressed), scale(0.97f)); addState(intArrayOf(), scale(1f))
+            addState(intArrayOf(android.R.attr.state_pressed), scale(0.96f)); addState(intArrayOf(), scale(1f))
         }
     }
     fun enabled(context: Context) = ValueAnimator.areAnimatorsEnabled() &&
