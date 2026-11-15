@@ -1,8 +1,11 @@
 # M57 wellbeing tools and UI continuation
 
-This scope remains active while a current Preview APK is prepared. The owner
-explicitly deferred **online recovery only** on 13 November 2026. The broader
-UI, focus, blocking, analytics, notifications and Strict-mode work is retained.
+> **Current roadmap, 15 November:** [Current plan and status](current-roadmap.md) supersedes older online-recovery requirements and owns the offline/DNS decision, Strict/safe-mode scope and alpha/redesign sequence. Existing completion evidence below remains dated; it is not a new release claim.
+
+The broader UI, focus, blocking, analytics, notifications and Strict-mode scope
+remains active. On 15 November the owner removed online recovery/query from
+active scope. Local/safe-mode release and the offline-versus-DNS architecture
+now need design before more networking work.
 The [feature audit](feature-audit-2026-11-13.md) distinguishes source from device
 acceptance and publication.
 
@@ -36,7 +39,7 @@ acceptance and publication.
 | Browsing/network | Supported URL/day budgets, broader browser evidence, DNS/TCP/private-DNS/DoH/network-change coverage and optional app-network policies only after architecture and privacy validation. |
 | Strict | Supported parent-owned settings, App info, uninstall, VPN configuration/client/store/installer paths; authenticated maintenance; positive/false-positive OEM tests. Personal Android controls and managed policy remain distinct. |
 | UX/quality | Review every state, app-use page, onboarding return, keyboard, large text, TalkBack, empty/loading/error states, performance and CI/emulator/device gates. Material-expressive interaction with M57’s own warm visual language. |
-| Recovery | Deferred at the owner’s request. No online service, universal master password or unauthenticated reset is shipped. |
+| Recovery | Online recovery/query removed from active scope on 15 November. Design local/safe-mode release; no online service, universal password or unauthenticated reset is shipped. |
 
 ## Compatible source review
 

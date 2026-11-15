@@ -1,5 +1,7 @@
 # M57 feature and release audit, 13 November 2026
 
+> **Current roadmap, 15 November:** [Current plan and status](current-roadmap.md) supersedes older online-recovery requirements and owns the offline/DNS decision, Strict/safe-mode scope and alpha/redesign sequence. Existing completion evidence below remains dated; it is not a new release claim.
+
 This is the current implementation checklist for the native app. It reconciles the M57 workstream, the older requirement IDs and the owner's subsequent requests with the owning source. A row marked **Source** has implementation, not full device acceptance. **Partial** means a specified part is missing. **Open** means the feature or required evidence is not delivered. No row makes the entire app production-ready.
 
 The install requested today is the separate **M57 Preview** application (`com.lyra.blocker.preview`). It keeps the production application's identity, data, administrator and Android permissions separate. Preview is for reviewing current behavior, not a stable signed public release.

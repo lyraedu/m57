@@ -1,5 +1,7 @@
 # M57 product and public-page additions
 
+> **Current roadmap, 15 November:** [Current plan and status](current-roadmap.md) supersedes older online-recovery requirements and owns the offline/DNS decision, Strict/safe-mode scope and alpha/redesign sequence. Existing completion evidence below remains dated; it is not a new release claim.
+
 Owner decisions, 12 November 2026. These requirements are planned, not shipping claims. The shared current brief is in Lyra `docs/roadmap/product-vision.md`; preserve separate repository/licensing boundaries.
 
 ## Purpose and identity
