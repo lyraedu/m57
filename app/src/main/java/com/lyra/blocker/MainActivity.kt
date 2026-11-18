@@ -440,7 +440,7 @@ class MainActivity : Activity() {
             Motion.reveal(advanced)
         }.apply { gravity = Gravity.START })
         page.addView(advanced)
-        advanced.addView(LyraUi.feature(this, "↗", "Your installed Lyra app, automatically", "M57 checks the installed app’s trusted web address and scope. Both lyra-dev.vercel.app and lyraedu.app are supported. No package selection is needed."))
+        advanced.addView(LyraUi.feature(this, "↗", "Your installed Lyra app, automatically", "M57 checks the installed app’s trusted web address and scope. The default address is lyraedu.app, with a browser available when no matching app is installed. No package selection is needed."))
         advanced.addView(LyraUi.link(this, "How to install and find the PWA") { showPwaGuide() })
         val extras = input(advanced, "Extra AI package IDs (one per line)", store.extraPackages.joinToString("\n"), InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
         advanced.addView(LyraUi.text(this, "Included apps: ${BlockPolicy.apps.values.distinct().joinToString(", ")}", 12f, LyraUi.muted))
@@ -740,7 +740,7 @@ class MainActivity : Activity() {
         val message = (if (notFound) "No matching installed Lyra PWA was found.\n\n" else "") +
             "1. Open $destination in Chrome.\n\n2. Use Chrome's menu to install Lyra as an app.\n\n" +
             "3. Return to M57 and choose Open Lyra. M57 automatically finds a matching installed web app.\n\n" +
-            "Both lyra-dev.vercel.app and lyraedu.app are supported. A browser opens if no trusted installed app matches."
+            "The default address is lyraedu.app. A browser opens if no trusted installed app matches."
         dialog = AlertDialog.Builder(this).setTitle("Find your Lyra PWA").setMessage(message)
             .setNegativeButton("Close", null).setPositiveButton("Open in Chrome") { _, _ ->
                 if (!LyraLauncher.openInChrome(this, destination)) toast("Install or enable Google Chrome first.")

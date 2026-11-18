@@ -8,18 +8,30 @@ import java.util.Map;
 /** Pure URL policy shared by WebAPK discovery, source hints and the repo guard. */
 public final class HandoffPolicy {
     private HandoffPolicy() {}
-    public static final String DEFAULT_DESTINATION = "https://lyra-dev.vercel.app/chat";
+    public static final String DEFAULT_DESTINATION = "https://lyraedu.app/chat";
     private static final java.util.regex.Pattern LYRA_HOST = java.util.regex.Pattern.compile("^(?:lyra-dev\\.vercel\\.app|lyraedu\\.app)$", java.util.regex.Pattern.CASE_INSENSITIVE);
+    /** Resolve the former saved default without rewriting a school's custom destination. */
+    public static String currentDestination(String saved) {
+        if (saved == null) return DEFAULT_DESTINATION;
+        try {
+            URI previous = https(saved);
+            if (previous.getHost().equalsIgnoreCase("lyra-dev.vercel.app") &&
+                previous.getRawPath().equals("/chat") && previous.getRawFragment() == null)
+                return DEFAULT_DESTINATION + (previous.getRawQuery() == null ? "" : "?" + previous.getRawQuery());
+        } catch (Exception ignored) { }
+        return saved;
+    }
     public static boolean officialLyra(String address) {
         try { return LYRA_HOST.matcher(https(address).getHost()).matches(); }
         catch (Exception ignored) { return false; }
     }
-    /** Two explicitly trusted deployment origins may select the installed app's own origin. */
+    /** A legacy destination can use the canonical installed app, never the reverse. */
     public static String pwaDestination(String configured, String startUrl, String scope) {
         if (inScope(configured, startUrl, scope)) return configured;
         if (!officialLyra(configured) || !officialLyra(startUrl)) return null;
         try {
             URI target = https(configured), start = https(startUrl);
+            if (!start.getHost().equalsIgnoreCase("lyraedu.app")) return null;
             String candidate = "https://" + start.getHost() + (target.getRawPath().isEmpty() ? "/" : target.getRawPath())
                 + (target.getRawQuery() == null ? "" : "?" + target.getRawQuery());
             return inScope(candidate, startUrl, scope) ? candidate : null;

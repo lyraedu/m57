@@ -5,6 +5,17 @@ M57 opens its configured HTTPS destination with `m57_source=<service>` and
 selected inside another app. No prompt, account identity or chat text is sent.
 Custom/unknown AI apps use `other`. The APK contains no provider model IDs.
 
+The current default is `https://lyraedu.app/chat`; About opens
+`https://lyraedu.app/m57`. A saved former default at
+`https://lyra-dev.vercel.app/chat` resolves to the new default, preserving its
+query parameters. Other custom destinations, including custom paths on the
+preview host, are preserved. This only updates routing and does not change
+administrator settings or enable AI redirection.
+
+The website and app currently share `lyraedu.app`. A later split to
+`app.lyraedu.app` is planned, not enabled by this update; it will require another
+explicit destination and installed-app migration.
+
 Lyra's companion `/api/m57/handoff?source=<service>` endpoint authenticates the
 current user, selects only registered models with configured provider keys,
 then applies an optional school hint. The current registry determines family
@@ -32,8 +43,11 @@ Failed suggestions leave the current selection available and show a notice.
 
 Discovery checks HTTPS handlers and launcher activities for Chromium WebAPK
 packages. Metadata start URL and scope must match the configured destination's
-HTTPS origin and path boundary. An explicit saved package is used only if it
-passes those checks. Missing URL filters can fall back to a verified WebAPK's
+HTTPS origin and path boundary. A legacy preview destination can also select an
+installed `lyraedu.app` PWA, retaining its path and query. A canonical destination
+never switches back to an older preview installation; the browser fallback opens
+the canonical URL instead. An explicit saved package is used only if it passes
+those checks. Missing URL filters can fall back to a verified WebAPK's
 launcher; Chrome and the system HTTPS handler follow. Generated WebAPK IDs are
 never hardcoded. Plain shortcuts and PWAs installed by other browsers can fall
 back to a browser. Test standalone launch and query preservation on the phone.
@@ -50,4 +64,5 @@ clients, URL-hiding modes or encoded aliases.
 
 The protocol and accompanying Next.js implementation were prepared in the main
 Lyra repository. They must be deployed there; publishing this Android repository
-does not deploy Lyra. A Bubblewrap/native Lyra wrapper remains a future idea.
+does not deploy Lyra. Lyra's separate Android wrapper is maintained in that
+repository and follows its own build and release process.

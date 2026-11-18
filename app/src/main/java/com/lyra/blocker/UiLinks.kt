@@ -7,7 +7,7 @@ import android.net.Uri
 import android.widget.Toast
 
 object UiLinks {
-    const val ABOUT = "https://lyra-dev.vercel.app/m57"
+    const val ABOUT = "https://lyraedu.app/m57"
     fun about(activity: Activity) {
         runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ABOUT))) }
             .onFailure { Toast.makeText(activity, "Open $ABOUT in a browser", Toast.LENGTH_LONG).show() }

@@ -3,6 +3,31 @@
 These are required device checks, not results already observed. Run on an
 Android 14 phone/emulator and repeat core flows on the school’s OEM devices.
 
+## Domain migration candidate, 19 November 2026
+
+These source changes have no new phone acceptance evidence. Record the actual
+APK commit, phone, Android/OEM build and browser/PWA versions when checking:
+
+- Fresh install opens `https://lyraedu.app/chat`; About opens
+  `https://lyraedu.app/m57`.
+- Update an installation with the saved old default
+  `https://lyra-dev.vercel.app/chat`, including query parameters. Confirm the new
+  domain opens and `m57_source`/`m57_intent=new` survive sign-in. Repeat after
+  process restart and reboot, preserving credentials, controls and pause state.
+- Keep a custom school destination and a custom preview path, then update.
+  Confirm each remains unchanged and within its installed PWA's verified scope.
+- With both old-preview and current-domain PWAs installed, open the current
+  domain app. With only the old-preview PWA installed, open the current domain
+  in the browser. With no PWA, verify browser fallback. Reject lookalike hosts,
+  credential URLs and nonstandard ports.
+- AI redirection remains off when previously disabled. No existing chat text,
+  account identity or extra handoff data is transmitted by the migration.
+
+Local verification: pure JVM checks and the three release-tool Python tests
+passed. The offline Android Gradle gate could not start in this restricted
+environment: `FileLockContentionHandler` could not determine a usable wildcard
+IP. Android compilation, lint, assembly and device acceptance remain pending.
+
 ## Personal-experience candidate, 13 November 2026
 
 These new source flows are unverified on a phone. The numbered historical

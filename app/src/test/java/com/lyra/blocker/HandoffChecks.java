@@ -4,12 +4,19 @@ package com.lyra.blocker;
 public final class HandoffChecks {
     public static void main(String[]args){run();System.out.println("PWA scope, source hint and repository boundary checks passed");}
     public static void run(){
+        check("https://lyraedu.app/chat".equals(HandoffPolicy.currentDestination(null)), "Fresh installation kept the preview default");
+        check("https://lyraedu.app/chat".equals(HandoffPolicy.currentDestination("https://lyra-dev.vercel.app/chat")), "Saved preview default did not migrate");
+        check("https://lyraedu.app/chat?mode=learn&m57_source=chatgpt&m57_intent=new".equals(HandoffPolicy.currentDestination("https://LYRA-DEV.VERCEL.APP:443/chat?mode=learn&m57_source=chatgpt&m57_intent=new")), "Default migration lost query state");
+        for (String custom : new String[]{"https://school.test/chat?mode=learn", "https://lyra-dev.vercel.app/other/chat?mode=learn", "https://lyra-dev.vercel.app/chat/", "https://lyraedu.app/chat?mode=learn", "https://app.lyraedu.app/chat", "https://lyra-dev.vercel.app.evil.test/chat", "https://lyra-dev.vercel.app@evil.test/chat", "http://lyra-dev.vercel.app/chat", "https://lyra-dev.vercel.app:444/chat", "https://lyra-dev.vercel.app/chat#section"})
+            check(custom.equals(HandoffPolicy.currentDestination(custom)), "Default migration changed a custom or untrusted address");
         check(HandoffPolicy.officialLyra("https://lyraedu.app/chat"), "Custom deployment missed");
         check(HandoffPolicy.officialLyra("https://lyra-dev.vercel.app/"), "Preview deployment missed");
         check(!HandoffPolicy.officialLyra("https://lyraedu.app.evil.test/chat"), "Lookalike deployment accepted");
         check(!HandoffPolicy.officialLyra("https://lyraedu.app@evil.test/chat"), "Credential URL accepted");
         check(!HandoffPolicy.officialLyra("http://lyraedu.app/chat"), "Unencrypted deployment accepted");
         check("https://lyraedu.app/chat?mode=learn".equals(HandoffPolicy.pwaDestination("https://lyra-dev.vercel.app/chat?mode=learn", "https://lyraedu.app/", "https://lyraedu.app/")), "Installed alias app was not selected");
+        check("https://lyraedu.app/chat?m57_source=chatgpt&m57_intent=new".equals(HandoffPolicy.pwaDestination("https://lyraedu.app/chat?m57_source=chatgpt&m57_intent=new", "https://lyraedu.app/", "https://lyraedu.app/")), "Canonical app lost handoff intent");
+        check(HandoffPolicy.pwaDestination("https://lyraedu.app/chat?m57_source=chatgpt&m57_intent=new", "https://lyra-dev.vercel.app/", "https://lyra-dev.vercel.app/") == null, "Canonical handoff returned to an older preview app");
         check(HandoffPolicy.pwaDestination("https://lyra-dev.vercel.app/chat", "https://lyraedu.app/other/", "https://lyraedu.app/other/") == null, "Alias escaped PWA scope");
         check(HandoffPolicy.pwaDestination("https://school.test/chat", "https://lyraedu.app/", "https://lyraedu.app/") == null, "Custom destination switched origins");
         check(HandoffPolicy.inScope("https://school.test/chat?m57_intent=new","https://school.test/", "https://school.test/"),"Root PWA missed");

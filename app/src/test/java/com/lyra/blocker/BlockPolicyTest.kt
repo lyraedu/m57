@@ -64,12 +64,12 @@ class BlockPolicyTest {
         for (address in listOf("https://chatgpt.com/", "gemini.google.com/app", "https://www.perplexity.ai/search?q=study", "https://sub.claude.ai/chat")) {
             assertTrue(address, BlockPolicy.blockedAddress(address))
         }
-        for (address in listOf("https://lyra-edu.vercel.app/chat", "https://lyra-dev.vercel.app/chat", "https://chatgpt.com.evil.example/", "https://example.com/chatgpt.com", "https://example.com/?q=gemini.google.com", "https://notchatgpt.com")) {
+        for (address in listOf("https://lyraedu.app/chat", "https://lyra-edu.vercel.app/chat", "https://lyra-dev.vercel.app/chat", "https://chatgpt.com.evil.example/", "https://example.com/chatgpt.com", "https://example.com/?q=gemini.google.com", "https://notchatgpt.com")) {
             assertFalse(address, BlockPolicy.blockedAddress(address))
         }
     }
     @Test fun `destinations require unambiguous HTTPS URLs`() {
-        assertTrue(BlockPolicy.validDestination("https://lyra-edu.vercel.app/chat"))
+        assertTrue(BlockPolicy.validDestination("https://lyraedu.app/chat"))
         assertTrue(BlockPolicy.validDestination("https://school.example/chat?mode=learn"))
         for (url in listOf("http://school.example", "javascript:alert(1)", "intent://lyra", "https://user:pass@school.example/chat", "https:///chat", "https://school.example:1234/", "https://school.example/#fragment", "")) {
             assertFalse(url, BlockPolicy.validDestination(url))

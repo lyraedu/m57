@@ -78,8 +78,8 @@ class ProtectionStore(context: Context) {
         get() = prefs.getBoolean("repo_guard", true)
         set(value) { prefs.edit().putBoolean("repo_guard", value).apply() }
     var destination: String
-        get() = prefs.getString("destination", HandoffPolicy.DEFAULT_DESTINATION)!!
-        set(value) { require(BlockPolicy.validDestination(value)); prefs.edit().putString("destination", value).apply() }
+        get() = HandoffPolicy.currentDestination(prefs.getString("destination", null))
+        set(value) { require(BlockPolicy.validDestination(value)); prefs.edit().putString("destination", HandoffPolicy.currentDestination(value)).apply() }
     var pwaPackage: String
         get() = prefs.getString("pwa_package", "")!!
         set(value) { require(value.isEmpty() || BlockPolicy.validPackage(value)); prefs.edit().putString("pwa_package", value).apply() }
