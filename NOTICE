@@ -88,3 +88,9 @@ supplied new foreground, background and complete icon artwork. Its originals,
 digests, adaptive/themed derivatives and regeneration steps are in branding/.
 The 13 November launcher assets and replacement in-app ring use AGPL-3.0-only.
 Implementation and validation evidence is in docs/implementation-2026-11-13.md.
+
+M57's bedtime countdown and intervention, app-use breakdowns, three-day usage
+guidance, and expressive transitions draw on Zenith by 1372Slash and contributors.
+Source: https://github.com/1372Slash/Zenith
+Reviewed revision: 2cd777f9fb20d1b37320f262e86fed79290c9867 (GNU GPL version 3).
+M57 implements these designs with its own Android Views, graphics, and policies.

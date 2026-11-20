@@ -26,7 +26,8 @@ object Motion {
     fun enter(view: View) {
         if (!enabled(view.context)) return
         view.alpha = 0f; view.translationY = LyraUi.dp(view.context, 12).toFloat()
-        view.animate().alpha(1f).translationY(0f).setDuration(240).start()
+        view.animate().alpha(1f).translationY(0f).setDuration(300)
+            .setInterpolator(android.view.animation.PathInterpolator(.2f, .75f, .25f, 1f)).start()
     }
     fun reveal(view: View) {
         view.visibility = if (view.visibility == View.VISIBLE) View.GONE else View.VISIBLE

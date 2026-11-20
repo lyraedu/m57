@@ -6,8 +6,7 @@ import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.Process
-import java.time.LocalDate
-import java.time.ZoneId
+import java.time.ZonedDateTime
 
 data class UsageSnapshot(val available: Boolean, val totals: Map<String, Long>, val sampledAt: Long, val problem: String? = null)
 
@@ -16,14 +15,27 @@ object UsageAccess {
         .checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName) == AppOpsManager.MODE_ALLOWED
 
     /** Call on a worker. Android owns event retention; do not persist app-use events. */
-    fun today(context: Context): UsageSnapshot {
-        val now = System.currentTimeMillis()
+    fun today(context: Context): UsageSnapshot = period(context, 0, 0)
+
+    fun period(context: Context, fromDaysAgo: Long, throughDaysAgo: Long): UsageSnapshot {
+        require(fromDaysAgo in throughDaysAgo..6 && throughDaysAgo >= 0)
+        val now = ZonedDateTime.now()
+        val today = now.toLocalDate()
+        val start = today.minusDays(fromDaysAgo).atStartOfDay(now.zone)
+        val end = if (throughDaysAgo == 0L) now else today.minusDays(throughDaysAgo - 1).atStartOfDay(now.zone)
+        return sample(context, start, end, now.toInstant().toEpochMilli())
+    }
+
+    fun sample(context: Context, from: ZonedDateTime, to: ZonedDateTime,
+        now: Long = System.currentTimeMillis()): UsageSnapshot {
         if (!FocusStore(context).usageEnabled || !granted(context)) return UsageSnapshot(false, emptyMap(), now, "Usage access is off")
         return runCatching {
-            val start = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            val events = context.getSystemService(UsageStatsManager::class.java).queryEvents(start - 86_400_000, now)
+            val start = from.toInstant().toEpochMilli()
+            val end = to.toInstant().toEpochMilli()
+            val lookback = from.toLocalDate().minusDays(1).atStartOfDay(from.zone).toInstant().toEpochMilli()
+            val events = context.getSystemService(UsageStatsManager::class.java).queryEvents(lookback, end)
                 ?: return UsageSnapshot(false, emptyMap(), now, "Unlock this phone to read usage")
-            val timeline = UsageTimeline(start, now)
+            val timeline = UsageTimeline(start, end)
             val event = UsageEvents.Event()
             var count = 0
             while (events.hasNextEvent()) {

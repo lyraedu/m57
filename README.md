@@ -1,6 +1,6 @@
 # M57
 
-M57 is a free, ad-free, open-source Android app for making room for what matters. Choose focus timers, Pomodoro breaks, app limits, routines, short-video boundaries and website filtering. Optional AI redirection can open supported AI surfaces through [Lyra](https://lyraedu.app). Independent use needs no Lyra account.
+M57 is a free, ad-free, open-source Android app for making room for what matters. Choose focus timers, Pomodoro breaks, scheduled bedtime, app limits, routines, short-video boundaries and website filtering. Optional AI redirection can open supported AI surfaces through [Lyra](https://lyraedu.app). Independent use needs no Lyra account.
 
 M57 supports Android 14 and newer. Its accessibility rules and local DNS VPN cover known apps and domains, not every screen or connection. The VPN does not encrypt general traffic, and personal-device protections cannot guarantee that M57 stays installed. See the [device checklist](DEVICE_TESTS.md) for coverage and testing limits.
 
@@ -8,7 +8,7 @@ M57 supports Android 14 and newer. Its accessibility rules and local DNS VPN cov
 
 Download the signed APK and corresponding source from [Releases](https://github.com/lyraedu/m57/releases). Releases contain their own feature set; the redesigned personal experience described in [current implementation evidence](docs/implementation-2026-11-13.md) is development source awaiting the full Android and device gates.
 
-In the new setup, choose personal or family use, decide whether to enable Lyra redirection, and review access before granting it. Family setup creates an administrator password; personal setup is account-free. The timer works without accessibility, while app, video and browser enforcement need it. App-time insights and limits separately need optional usage access.
+In the new setup, choose personal or family use, decide whether to enable Lyra redirection, and review access before granting it. Family setup creates an administrator password; personal setup is account-free. The timer works without accessibility, while app, video and browser enforcement need it. App-time insights and limits separately need optional usage access. In development, M57 opens on Focus. Plan includes Bedtime, and Insights shows app-use estimates for Today, Yesterday and 7 Days.
 
 Current development builds use password setup. They do not migrate old PIN-only settings.
 

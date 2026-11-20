@@ -60,7 +60,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
     }
     private var shortsVisit = ShortsVisit()
     private var lastVideoKey:String?=null
-    private data class Target(val packageName: String, val label: String, val reminderOnly: Boolean = false, val appInfo: Boolean = false, val familyCategory: String? = null, val videoKey:String?=null, val sourceHint:String="other", val focusReason: String? = null)
+    private data class Target(val packageName: String, val label: String, val reminderOnly: Boolean = false, val appInfo: Boolean = false, val familyCategory: String? = null, val videoKey:String?=null, val sourceHint:String="other", val focusReason: String? = null, val bedtime: Boolean = false)
     private val handler = Handler(Looper.getMainLooper())
     private val recheck = Runnable { checkCurrentWindow() }
     private val pauseExpiry = Runnable { checkCurrentWindow(); schedulePauseExpiry() }
@@ -136,7 +136,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         if (target.focusReason == null) focusOverlay.hide()
         if (target.focusReason != null) {
             overlay.hide(); shortsOverlay.hide(); familyOverlay.hide()
-            focusOverlay.show(target.packageName, target.focusReason)
+            focusOverlay.show(target.packageName, target.focusReason, target.bedtime)
             return
         }
         if (target.familyCategory == null) familyOverlay.hide()
@@ -193,6 +193,12 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
                 AccessibilitySettingsPolicy.Node(it.id, it.text, it.checkable)
             }, getString(R.string.app_name), getString(R.string.accessibility_description))
             return if (appInfo || accessibility) Target(activePackage, "M57 settings", appInfo = true) else null
+        }
+        val bedtime = focusStore.bedtime
+        if (activePackage in bedtime.apps) {
+            val now = java.time.ZonedDateTime.now()
+            if (bedtime.window(now)?.active(now) == true && activePackage !in AppCatalog.protectedPackages(this))
+                return Target(activePackage, "Bedtime app", focusReason = "This app is on your bedtime list.", bedtime = true)
         }
         val focusReason = focusStore.blockingReason()
         if ((activePackage in focusStore.blockedApps || activePackage in limitStore.limits) &&

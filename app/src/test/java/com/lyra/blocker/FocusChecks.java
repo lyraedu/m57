@@ -40,6 +40,20 @@ public final class FocusChecks {
         check(!RoutinePolicy.active(monday, 60, 60, ZonedDateTime.parse("2026-11-16T01:00:00Z")), "Zero duration became all-day");
         check(RoutinePolicy.active(Set.of(7), 60, 180, ZonedDateTime.parse("2026-11-01T01:30:00-04:00[America/New_York]")), "DST first hour missing");
         check(RoutinePolicy.active(Set.of(7), 60, 180, ZonedDateTime.parse("2026-11-01T01:30:00-05:00[America/New_York]")), "DST second hour missing");
+        var earlyTuesday = ZonedDateTime.parse("2026-11-17T05:59:00+05:30");
+        var mondayNight = BedtimePolicy.currentOrNext(monday, 22 * 60, 6 * 60, earlyTuesday);
+        check(mondayNight.active(earlyTuesday) && mondayNight.start().getDayOfWeek().getValue() == 1,
+            "Bedtime did not carry Monday's schedule into Tuesday");
+        var bedtimeEnd = earlyTuesday.plusMinutes(1);
+        check(!mondayNight.active(bedtimeEnd), "Bedtime remained active at its end");
+        check(BedtimePolicy.currentOrNext(monday, 22 * 60, 6 * 60, bedtimeEnd).start().equals(mondayNight.start().plusWeeks(1)),
+            "Countdown chose a day outside the schedule");
+        check(BedtimePolicy.latestCompleted(monday, 22 * 60, 6 * 60, bedtimeEnd).equals(mondayNight),
+            "Usage view skipped the night that just finished");
+        check(BedtimePolicy.currentOrNext(monday, 60, 60, earlyTuesday) == null, "Invalid bedtime became a whole-day block");
+        var overlap = ZonedDateTime.parse("2026-11-01T01:20:00-05:00[America/New_York]");
+        check(BedtimePolicy.currentOrNext(Set.of(7), 60, 90, overlap).active(overlap),
+            "Bedtime ended early in the repeated DST hour");
         check(FocusPolicy.blocks("sub.example.com", Set.of("example.com"), Set.of(), false), "Subdomain not held");
         check(!FocusPolicy.blocks("example.com.evil.test", Set.of("example.com"), Set.of(), false), "Lookalike host held");
         check(!FocusPolicy.blocks("study.example.com", Set.of("example.com"), Set.of("study.example.com"), true), "Study exception lost precedence");

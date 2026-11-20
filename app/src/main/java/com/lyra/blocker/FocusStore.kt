@@ -13,6 +13,18 @@ import java.util.UUID
 
 data class FocusRecord(val id: String, val title: String, val ended: Long, val focused: Long, val completed: Boolean)
 data class FocusRoutine(val id: String, val title: String, val days: Set<Int>, val start: Int, val end: Int, val enabled: Boolean)
+data class BedtimeSchedule(
+    val enabled: Boolean = false,
+    val start: Int = 22 * 60,
+    val end: Int = 7 * 60,
+    val days: Set<Int> = (1..7).toSet(),
+    val apps: Set<String> = emptySet()
+) {
+    fun window(now: ZonedDateTime) = if (enabled) BedtimePolicy.currentOrNext(days, start, end, now) else null
+
+    fun valid() = start in 0..1439 && end in 0..1439 && start != end &&
+        days.isNotEmpty() && days.all { it in 1..7 } && apps.size <= 500 && apps.all(BlockPolicy::validPackage)
+}
 data class FocusSession(val id: String, val title: String, val kind: String, val wall: Long, val elapsed: Long,
     val boot: Int, val focus: Long, val rest: Long, val rounds: Int, val strict: Boolean)
 data class FocusDraft(val kind: String = "timer", val title: String = "", val minutes: String = "25",
@@ -101,6 +113,30 @@ class FocusStore(context: Context) {
         val recorded = history.filter { Instant.ofEpochMilli(it.ended).atZone(ZoneId.systemDefault()).toLocalDate() == today }.sumOf { it.focused }
         return recorded + (session?.let { state(it).focused() } ?: 0)
     }
+    private var bedtimeCache: Pair<String, BedtimeSchedule>? = null
+    var bedtime: BedtimeSchedule
+        get() {
+            val raw = prefs.getString("bedtime", null) ?: return BedtimeSchedule()
+            bedtimeCache?.let { if (it.first == raw) return it.second }
+            val schedule = runCatching {
+                val data = JSONObject(raw)
+                val days = data.getJSONArray("days")
+                val apps = data.getJSONArray("apps")
+                BedtimeSchedule(data.getBoolean("enabled"), data.getInt("start"), data.getInt("end"),
+                    (0 until days.length().coerceAtMost(7)).map { days.getInt(it) }.toSet(),
+                    (0 until apps.length().coerceAtMost(500)).map { apps.getString(it) }.toSet())
+                    .takeIf { it.valid() } ?: BedtimeSchedule()
+            }.getOrDefault(BedtimeSchedule())
+            bedtimeCache = raw to schedule
+            return schedule
+        }
+        set(value) {
+            require(value.valid())
+            val data = JSONObject().put("enabled", value.enabled).put("start", value.start).put("end", value.end)
+                .put("days", JSONArray(value.days.sorted())).put("apps", JSONArray(value.apps.sorted()))
+            prefs.edit().putString("bedtime", data.toString()).apply()
+        }
+
     val routines: List<FocusRoutine> get() = runCatching {
         val a = JSONArray(prefs.getString("routines", "[]"))
         (0 until a.length().coerceAtMost(30)).map { i -> a.getJSONObject(i).let { j ->

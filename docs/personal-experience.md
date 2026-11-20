@@ -1,6 +1,9 @@
 # Personal M57
 
-M57 has five personal destinations: Home, Focus, Plan, Insights and Settings.
+M57 opens on Focus. The personal dock includes Focus, Plan, Insights and
+Settings. Bedtime is in Plan. Protection opens directly to searchable Controls,
+where you can pause or resume protection. Device access and credentials live in
+protected Settings.
 New installations choose personal or family authority during a resumable,
 persona-specific illustrated introduction and permission guide. Lyra redirection is an optional switch, off by default
 for new installations. Existing password installations retain family authority,
@@ -10,7 +13,7 @@ credentials, pauses, permissions and all existing rule selections.
 
 Personal use requires no password, account or Lyra connection. Family use
 requires the existing administrator credential before changing protection,
-app limits, routines, browser rules or device policies. Personal timers, goals
+app limits, routines, bedtime, browser rules or device policies. Personal timers, goals
 and focus history remain available without unlocking that space. There is no
 in-app downgrade from an existing family installation to personal authority.
 Intent extras can open the personal timer; they cannot grant administrator access.
@@ -49,6 +52,20 @@ The launcher, default dialer, Settings, permission controller, M57 and the
 configured Lyra PWA are excluded from the app picker. Calling emergency services
 must remain available; verify changed default apps and OEM variants on a device.
 
+## Bedtime
+
+In Plan, open Bedtime to see the next start or remaining time in the current
+window. Set start and end times, the days the schedule begins, and a separate
+list of apps to hold. The schedule starts disabled. With no selected apps it
+shows a countdown only. Enabled app rules need connected accessibility and
+active protection. Bedtime settings follow the same authority rules as other
+boundaries. The schedule follows the phone's current timezone and can bridge
+midnight. Focus and Pomodoro breaks leave bedtime rules in force.
+
+With optional usage access, Bedtime can estimate foreground time during the
+most recent completed window according to your current schedule. Android may
+have already dropped events for that window.
+
 ## Usage, history and privacy
 
 Usage processing is independently opt-in and requires Android Usage Access.
@@ -70,10 +87,13 @@ Completion and insertion into history use a single preferences transaction.
 Records contain a random session ID, the person's optional intention, end time,
 focused duration and completion flag. Intention text never leaves the phone
 unless the person explicitly exports history. Sessions are credited to the
-local day they end. Insights supplies a seven-day view, optional local app-time
-estimates, JSON export through Android's document picker and history deletion.
+local day they end. Insights shows estimated app use for today, yesterday or the
+last seven calendar days, plus seven days of focus history. Keep Usage Access
+enabled and use M57 for at least three days for a clearer picture. Android's
+event retention determines how much history is available. Insights also offers
+JSON export through Android's document picker and history deletion.
 Deletion does not cancel an active session or erase already-exported files.
-Android backups remain disabled. Storage-write failures are surfaced on Home.
+Android backups remain disabled. Storage-write failures are surfaced on Focus.
 
 The home-screen widget opens Focus and shows the saved daily goal progress.
 It does not change protection or start sessions without an explicit action.

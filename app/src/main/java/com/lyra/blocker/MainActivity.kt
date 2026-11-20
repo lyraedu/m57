@@ -38,6 +38,7 @@ import com.lyra.blocker.family.FamilySyncJob
 
 class MainActivity : Activity() {
     companion object {
+        const val BEDTIME_EXTRA = "m57.open_bedtime"
         const val SETTINGS_GUARD_EXTRA = "com.lyra.blocker.SETTINGS_GUARD_NOTICE"
         private const val FAMILY_VPN_REQUEST = 5703
     }
@@ -55,7 +56,7 @@ class MainActivity : Activity() {
     private val personalPages by lazy { PersonalPages(this, { page(personalTab = it) }, { requestAdmin(it) }, { accessibilityEnabled() }, { showLicenses() }) }
     private val focusRulesPages by lazy { FocusRulesPages(this, { unlocked }, { navigate(it) }) }
     private val onboardingPages by lazy { OnboardingPages(this, { page() }, { accessibilityEnabled() }, { visibleShell?.setFooter(it) }, { setBack(it) }) {
-        if (store.familyManaged) showPasswordSetup(initialConsent = true) else personalPages.show("Home")
+        if (store.familyManaged) showPasswordSetup(initialConsent = true) else personalPages.show("Focus")
     } }
     private val familyPages by lazy { FamilyPages(this, { unlocked }, { navigate(it) }, { requestFamilyVpn() }) }
     private val appRulesPages by lazy { AppRulesPages(this, { unlocked }) }
@@ -84,7 +85,10 @@ class MainActivity : Activity() {
         else if (refreshBattery) navigate(AdminPage.DEVICE_ACCESS)
         else if (!store.onboarded) onboardingPages.show()
         else if (store.familyManaged && !store.hasPassword) showPasswordSetup(initialConsent = true)
-        else if (intent.getBooleanExtra("m57.open_focus", false)) {
+        else if (intent.getBooleanExtra(BEDTIME_EXTRA, false)) {
+            intent.removeExtra(BEDTIME_EXTRA)
+            personalPages.show("Bedtime")
+        } else if (intent.getBooleanExtra("m57.open_focus", false)) {
             intent.removeExtra("m57.open_focus"); personalPages.show("Focus")
         } else if (returnToSetup) {
             if (unlocked) navigate(AdminPage.SETUP) else requestAdmin(AdminPage.SETUP)
@@ -117,31 +121,35 @@ class MainActivity : Activity() {
         refresh.removeCallbacksAndMessages(null)
         personalPages.stop()
         focusRulesPages.stop()
-        val shell = PageShell(this, if (destination == AdminPage.SETUP) null else destination?.tab, onTab = { tab ->
+        val dockTab = when (destination) {
+            AdminPage.SETUP, AdminPage.BEDTIME -> null
+            else -> destination?.tab
+        }
+        val shell = PageShell(this, dockTab, onTab = { tab ->
             navigate(when (tab) {
-                AdminTab.OVERVIEW -> AdminPage.OVERVIEW
                 AdminTab.CONTROLS -> AdminPage.CONTROLS
                 AdminTab.SETTINGS -> AdminPage.SETTINGS
             })
-        }, customDock = personalTab?.let { PersonalDock(this, it) { next -> personalPages.show(next) } })
+        }, customDock = personalTab?.let { PersonalDock(this, if (it == "Bedtime") "Plan" else it) { next -> personalPages.show(next) } })
         setContentView(shell)
         if (!secure) window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
         visibleShell = shell
         shell.requestApplyInsets()
         if (destination != null) {
-            val parent = destination.parent ?: AdminPage.OVERVIEW
-            setBack { if (destination == AdminPage.OVERVIEW) lockAndHome() else navigate(parent) }
+            val parent = destination.parent ?: AdminPage.CONTROLS
+            setBack { if (destination == AdminPage.CONTROLS) lockAndHome() else navigate(parent) }
             val header = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-            header.addView(LyraUi.link(this, if (destination.parent != null) "‹  ${parent.title}" else if (store.familyManaged) "PARENT CONTROLS" else "MY CONTROLS") {
-                if (destination.parent != null) navigate(parent)
-            }.apply {
-                gravity = Gravity.START
-                layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
-                if (destination.parent == null) { isClickable = false; isFocusable = false }
-            })
+            val lead = if (destination.parent != null) LyraUi.link(this, "‹  ${parent.title}") {
+                navigate(parent)
+            }.apply { gravity = Gravity.START } else View(this)
+            header.addView(lead, LinearLayout.LayoutParams(0, -2, 1f))
             header.addView(LyraUi.link(this, if (store.familyManaged) "Lock & leave" else "Back to my day") { lockAndHome() })
             shell.content.addView(header)
-        } else setBack(if (personalTab != null && personalTab != "Home") ({ personalPages.show("Home") }) else null)
+        } else setBack(when (personalTab) {
+            "Bedtime" -> ({ personalPages.show("Plan") })
+            null, "Focus" -> null
+            else -> ({ personalPages.show("Focus") })
+        })
         return shell.content
     }
 
@@ -193,9 +201,9 @@ class MainActivity : Activity() {
         }
         page.addView(LyraUi.badge(this, "ADMINISTRATOR ACCESS NEEDED"))
         title(page, "Make changes from M57.", "To change M57's accessibility or App info settings, unlock the administrator space first.")
-        page.addView(LyraUi.text(this, "You can pause protection from Overview, or allow 60 seconds of settings access under Settings → Device access. Protection stays in place until an administrator authorises a change.", 15f, LyraUi.muted))
+        page.addView(LyraUi.text(this, "You can pause protection from Controls, or allow 60 seconds of settings access under Settings → Device access. Protection stays in place until an administrator authorises a change.", 15f, LyraUi.muted))
         page.addView(LyraUi.button(this, "Administrator access") { askPassword() })
-        page.addView(LyraUi.link(this, "Back to Home") { showHome() })
+        page.addView(LyraUi.link(this, "Back to M57") { showHome() })
     }
 
     /** Every administrator route goes through this guard; no Intent can unlock it. */
@@ -211,12 +219,12 @@ class MainActivity : Activity() {
         }
         getSystemService(InputMethodManager::class.java).hideSoftInputFromWindow(window.decorView.windowToken, 0)
         when (destination) {
-            AdminPage.OVERVIEW -> showOverview()
             AdminPage.CONTROLS -> showControls()
             AdminPage.SETTINGS -> showAdminSettings()
             AdminPage.FOCUS_RULES -> focusRulesPages.focus(page(AdminPage.FOCUS_RULES))
             AdminPage.APP_LIMITS -> focusRulesPages.limits(page(AdminPage.APP_LIMITS))
             AdminPage.ROUTINES -> focusRulesPages.routines(page(AdminPage.ROUTINES))
+            AdminPage.BEDTIME -> focusRulesPages.bedtime(page(AdminPage.BEDTIME)) { visibleShell?.setFooter(it) }
             AdminPage.SETUP -> setupPages.show(page(AdminPage.SETUP))
             AdminPage.AI -> showAiSettings()
             AdminPage.APP_RULES -> appRulesPages.apps(page(AdminPage.APP_RULES))
@@ -232,48 +240,26 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showOverview() {
-        val page = page(AdminPage.OVERVIEW)
-        title(page, "A little more balance.", if (store.familyManaged) "Review the boundaries on this phone, with every control close at hand." else "Choose the app, video and website boundaries that fit your day.")
+    private fun protectionStatus(page: LinearLayout) {
         val access = accessibilityEnabled()
-        val connected = access && LyraAccessibilityService.connected
+        val paused = store.paused
         page.addView(LyraUi.card(this).apply {
-            addView(LyraUi.badge(this@MainActivity, when {
-                store.paused -> "PAUSED"
-                !access -> "ACCESSIBILITY NEEDED"
-                !connected -> "WAITING FOR ANDROID"
-                else -> "CHOSEN SCREEN CONTROLS READY"
-            }))
             addView(LyraUi.text(this@MainActivity, when {
-                store.paused -> "Taking a short break."
-                !access -> "One more step to get ready."
-                !connected -> "Access is enabled. Waiting for M57 to connect."
-                else -> "A little room for what matters."
-            }, 23f, bold = true))
-            addView(LyraUi.text(this@MainActivity, pauseDescription(), 14f, LyraUi.muted))
-            if (store.paused) addView(LyraUi.button(this@MainActivity, "Resume protection") {
-                if (unlocked) { store.resume(); navigate(AdminPage.OVERVIEW) }
+                paused -> "Protection paused"
+                !access -> "Accessibility access needed"
+                !LyraAccessibilityService.connected -> "Waiting for Android to connect"
+                else -> "Screen controls ready"
+            }, 20f, bold = true))
+            if (paused) addView(LyraUi.text(this@MainActivity, pauseDescription(), 14f, LyraUi.muted))
+            addView(LyraUi.button(this@MainActivity, if (paused) "Resume protection" else "Pause protection", paused) {
+                if (!unlocked) return@button
+                if (store.paused) { store.resume(); navigate(AdminPage.CONTROLS) }
+                else navigate(AdminPage.PAUSE)
             })
         })
-        page.addView(Switch(this).apply {
-            text = "Protection enabled"
-            textSize = 17f
-            setTextColor(LyraUi.ink)
-            minimumHeight = LyraUi.dp(this@MainActivity, 56)
-            isChecked = !store.paused
-            setOnClickListener {
-                if (!unlocked) return@setOnClickListener
-                if (store.paused) { store.resume(); navigate(AdminPage.OVERVIEW) }
-                else { isChecked = true; navigate(AdminPage.PAUSE) }
-            }
-        })
-        if (!access) routeCard(page, "⌘", "Finish device setup", "Enable accessibility and review removal protection.") { navigate(AdminPage.DEVICE_ACCESS) }
-        routeCard(page, "↗", "Make it yours", "Find AI, short-video and family controls in one place.") { navigate(AdminPage.CONTROLS) }
-        routeCard(page, "Ⅱ", "Protection schedule", "Pause for a while, choose an end time or resume protection.") { navigate(AdminPage.PAUSE) }
-        if (store.aiEnabled) page.addView(LyraUi.button(this, "Open Lyra", false) { openLyra() })
-        if (store.paused && !store.pauseIndefinite) {
+        if (paused && !store.pauseIndefinite) {
             val current = generation
-            refresh.postDelayed({ if (current == generation && unlocked && !isDestroyed) navigate(AdminPage.OVERVIEW) },
+            refresh.postDelayed({ if (current == generation && unlocked && !isDestroyed) navigate(AdminPage.CONTROLS) },
                 store.pauseRemaining.coerceAtMost(86_400_000) + 100)
         }
     }
@@ -281,26 +267,28 @@ class MainActivity : Activity() {
     private fun pauseDescription(): String = when {
         store.pauseIndefinite -> "Protection is off until an administrator turns it back on."
         store.paused -> "Resumes ${java.time.format.DateTimeFormatter.ofPattern("EEE d MMM · HH:mm z").format(java.time.Instant.ofEpochMilli(store.pauseEndsAt).atZone(java.time.ZoneId.systemDefault()))}."
-        else -> "Manage destinations, reminders and device access from your admin space."
+        else -> "Protection is on."
     }
 
     private fun showPauseOptions() {
         val page = page(AdminPage.PAUSE)
-        title(page, "Make room for a break.", "Pause protection on your terms. AI rules, Shorts reminders and the App info guard pause together.")
+        title(page, "Pause protection", "Choose when screen controls, including bedtime, should resume.")
         page.addView(LyraUi.text(this, pauseDescription(), 15f, LyraUi.muted))
         listOf(15 to "15 minutes", 60 to "1 hour", 180 to "3 hours").forEach { (minutes, label) ->
             page.addView(LyraUi.button(this, label, false) {
-                if (unlocked) { store.pauseFor(minutes); navigate(AdminPage.OVERVIEW) }
+                if (unlocked) { store.pauseFor(minutes); navigate(AdminPage.CONTROLS) }
             })
         }
         routeCard(page, "◷", "Choose a date & time", "Set exactly when protection should return.") { navigate(AdminPage.CUSTOM_PAUSE) }
         page.addView(LyraUi.button(this, "Until I turn it back on", false) {
-            if (unlocked) { store.pauseAlways(); navigate(AdminPage.OVERVIEW) }
+            if (unlocked) { store.pauseAlways(); navigate(AdminPage.CONTROLS) }
         })
         if (store.paused) page.addView(LyraUi.button(this, "Resume protection now") {
-            if (unlocked) { store.resume(); navigate(AdminPage.OVERVIEW) }
+            if (unlocked) { store.resume(); navigate(AdminPage.CONTROLS) }
         })
-        page.addView(LyraUi.text(this, "Your chosen pause survives a restart. Returning here to change it requires the administrator password.", 13f, LyraUi.muted))
+        val persistence = if (store.familyManaged) "Pauses survive a restart. Changes require the administrator password."
+            else "Pauses survive a restart."
+        page.addView(LyraUi.text(this, persistence, 13f, LyraUi.muted))
     }
 
     private fun showCustomPause() {
@@ -315,13 +303,14 @@ class MainActivity : Activity() {
             val deadline = picker.selectedEpoch()
             if (deadline == null || deadline <= System.currentTimeMillis()) {
                 feedback.text = "Choose a valid date and time in the future."
-            } else { store.pauseUntil(deadline); navigate(AdminPage.OVERVIEW) }
+            } else { store.pauseUntil(deadline); navigate(AdminPage.CONTROLS) }
         })
     }
 
     private fun showControls() {
         val page = page(AdminPage.CONTROLS)
-        title(page, "Find your balance.", "One place for every kind of protection. Choose a category or search for a setting.")
+        title(page, if (store.familyManaged) "Parent controls" else "Protection", "Set boundaries for apps, videos and websites.")
+        protectionStatus(page)
         val search = LyraUi.field(EditText(this)).apply {
             hint = "Search AI, Shorts, websites, permissions…"
             contentDescription = "Search protection controls"
@@ -349,6 +338,7 @@ class MainActivity : Activity() {
             override fun afterTextChanged(s: Editable?) {}
         })
         render(controlsQuery)
+        if (store.aiEnabled) page.addView(LyraUi.button(this, "Open Lyra", false) { openLyra() })
     }
 
     private fun showAdminSettings() {
@@ -539,7 +529,7 @@ class MainActivity : Activity() {
         page.addView(LyraUi.text(this, "Next, create an administrator password. Keep it private and do not share it with the child using this device.", 15f, LyraUi.muted))
         page.addView(LyraUi.button(this, "About the open-source app", false) { showLicenses() })
         page.addView(LyraUi.button(this, "I agree · create password") { showPasswordSetup(initialConsent = true) })
-        page.addView(LyraUi.link(this, "Back to Home") { showHome() })
+        page.addView(LyraUi.link(this, "Back to M57") { showHome() })
     }
 
     private fun startBatteryAction(action: () -> Boolean) {
@@ -605,7 +595,7 @@ class MainActivity : Activity() {
             backgroundWork(submit, feedback, getString(R.string.password_checking), listOf(field, reveal), {}, { store.verifyCredential(value) }) { valid ->
                 if (valid) {
                     unlocked = true
-                    val destination = pendingAdminPage ?: AdminPage.OVERVIEW
+                    val destination = pendingAdminPage ?: AdminPage.CONTROLS
                     pendingAdminPage = null
                     navigate(if(store.setupComplete) destination else AdminPage.SETUP)
                 } else if (store.retrySeconds > 0) cooldown()
@@ -619,7 +609,7 @@ class MainActivity : Activity() {
         }
         if (store.retrySeconds > 0) cooldown()
         page.addView(LyraUi.text(this, "Keep your password safe. Developer-assisted online recovery is planned; this build has no password-reset service or master password.", 13f, LyraUi.muted))
-        page.addView(LyraUi.link(this, "Back to Home") { showHome() })
+        page.addView(LyraUi.link(this, "Back to M57") { showHome() })
     }
 
     private fun showPasswordSetup(initialConsent: Boolean = false) {
@@ -674,7 +664,7 @@ class MainActivity : Activity() {
                 else -> {
                     backgroundWork(submit, feedback, getString(R.string.password_saving), listOf(first, second, reveal), { updateForm() }, { PasswordCredential.create(value) }) { hash ->
                         runCatching { store.savePassword(hash); store.consent() }.onSuccess {
-                            unlocked = true; navigate(if(store.setupComplete)AdminPage.OVERVIEW else AdminPage.SETUP)
+                            unlocked = true; navigate(if(store.setupComplete)AdminPage.CONTROLS else AdminPage.SETUP)
                         }.onFailure { feedback.show(getString(R.string.password_save_failed), error = true) }
                     }
                     first.text.clear(); second.text.clear()
@@ -729,7 +719,7 @@ class MainActivity : Activity() {
     private fun showLicenses() {
         val license = listOf("NOTICE", "AGPL-3.0-only.txt", "COPYING", "Apache-2.0.txt", "StevenBlack-MIT.txt", "HOSTS-SOURCES.txt", "OFL-Sora.txt").joinToString("\n\n") { file -> assets.open(file).bufferedReader().use { it.readText() } }
         dialog = AlertDialog.Builder(this).setTitle("${getString(R.string.app_name)} · ${packageManager.getPackageInfo(packageName, 0).versionName}")
-            .setMessage("Source: ${BuildConfig.SOURCE_URL}\n${if(BuildConfig.SOURCE_REF.isBlank()) "Unversioned local build" else "Commit ${BuildConfig.SOURCE_REF}"}\n\nM57 · GNU AGPL v3\nCurbox-derived portions · GPL v3\nHosts aggregator · Steven Black and contributors · MIT, with individual list terms retained\nhttps://github.com/StevenBlack/hosts\nhttps://github.com/curbox-app/curbox-android\n\n$license")
+            .setMessage("Source: ${BuildConfig.SOURCE_URL}\n${if(BuildConfig.SOURCE_REF.isBlank()) "Unversioned local build" else "Commit ${BuildConfig.SOURCE_REF}"}\n\nM57 · GNU AGPL v3\nCurbox-derived portions · GPL v3\nDesign references · Zenith by 1372Slash and contributors (bedtime, usage and motion)\nhttps://github.com/1372Slash/Zenith\nHosts aggregator · Steven Black and contributors · MIT, with individual list terms retained\nhttps://github.com/StevenBlack/hosts\nhttps://github.com/curbox-app/curbox-android\n\n$license")
             .setNeutralButton("View source") { _, _ ->
                 if (unlocked) store.allowAppInfoAccess()
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.SOURCE_URL))) }

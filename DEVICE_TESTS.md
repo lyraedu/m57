@@ -42,7 +42,7 @@ Record the actual APK commit, phone, Android/OEM build, locale and app versions.
   search and unselected AI Mode tabs must remain usable. Test localizations and
   explicitly record unsupported variants.
 - Personal mode: no account/password prompt; timer works with accessibility
-  declined. Enabling access must agree with the disclosure, then Home must
+  declined. Enabling access must agree with the disclosure, then Focus must
   distinguish configured permission from a connected service. Family mode must
   finish password setup before any protection/admin control is considered ready.
   Update an existing password installation and confirm credentials, cooldown,
@@ -79,7 +79,15 @@ Record the actual APK commit, phone, Android/OEM build, locale and app versions.
   crediting, JSON export/cancel/write failure, deletion and low-storage errors.
   Check no passwords/settings or raw Android events enter the export. Already
   exported files remain under the user's document-provider control.
-- UX: five personal tabs, three protected tabs, Android Back, keyboard, 320dp
+- Bedtime: check disabled, countdown-only and selected-app schedules, an
+  unselected adjacent app, exclusive end, overnight start day, DST and timezone
+  changes, reboot, paused protection and revoked/disconnected accessibility.
+  Check the new bedtime intervention and return link, caller/launcher exclusions,
+  overlapping Focus boundaries, and password requirements for schedule edits.
+- App Use: compare Today, Yesterday and 7 Days, verify rows, estimates and app
+  details, then switch tabs rapidly and revoke access. Check early-history
+  guidance and Bedtime's last completed window against Android data.
+- UX: four personal tabs, two protected tabs, Android Back, keyboard, 320dp
   width, landscape/tablet, 200% font scaling, TalkBack, battery saver, disabled
   system animations and in-app Reduce motion. Verify previews explain controls,
   do not trap gestures, and never claim to be enforcement tests.

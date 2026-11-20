@@ -18,6 +18,16 @@ Updated 15 November 2026. Source reviewed on `feat/independent-focus` at `520ab7
 
 The current recorded artifact is development-signed `0.6.4-preview`, package `com.lyra.blocker.preview`. Basic onboarding/Focus was exercised; accessibility interception and broad Strict coverage were not established. Preserve production identity/data and Preview data. Do not infer current phone availability from prior installation.
 
+## 20 November development update
+
+Focus replaces the personal landing page. Protected Controls replaces Overview
+and includes pause/resume. Plan includes bedtime with overnight app restrictions,
+a live countdown and an optional estimate for the last scheduled night. Insights
+adds selectable app-time periods and guidance to allow at least three days of use.
+Zenith is credited in the bundled notices. Device acceptance, visit/unlock
+counts, optional usage notifications, DND integration and the remaining roadmap
+items are open.
+
 ## Updated owner decisions
 
 ### 1. Offline architecture before more network work

@@ -32,7 +32,14 @@ class NavigationDock @JvmOverloads constructor(context: Context, destinations: L
                 setPadding(LyraUi.dp(context, 3), LyraUi.dp(context, 8), LyraUi.dp(context, 3), LyraUi.dp(context, 6))
                 background = RippleDrawable(ColorStateList.valueOf(0x22D56A3A),
                     LyraUi.shape(if (active) if (green) LyraUi.mossSoft else LyraUi.apricotSoft else Color.TRANSPARENT, LyraUi.dp(context, 20).toFloat()), null)
-                addView(M57IconView(context, destination.icon, if (active) tone else LyraUi.muted), LayoutParams(LyraUi.dp(context, 24), LyraUi.dp(context, 24)))
+                val icon = M57IconView(context, destination.icon, if (active) tone else LyraUi.muted)
+                addView(icon, LayoutParams(LyraUi.dp(context, 24), LyraUi.dp(context, 24)))
+                if (active && Motion.enabled(context)) {
+                    icon.scaleX = .82f
+                    icon.scaleY = .82f
+                    icon.animate().scaleX(1f).scaleY(1f).setDuration(330)
+                        .setInterpolator(android.view.animation.OvershootInterpolator(.75f)).start()
+                }
                 addView(LyraUi.text(context, destination.title, 11f, if (active) tone else LyraUi.muted, active).apply {
                     gravity = Gravity.CENTER; layoutParams = LayoutParams(-1, -2).apply { topMargin = LyraUi.dp(context, 5) }
                 })

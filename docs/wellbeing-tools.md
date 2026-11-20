@@ -31,10 +31,10 @@ acceptance and publication.
 
 | Area | Required continuation |
 | --- | --- |
-| Usage | A dedicated app-time dashboard, daily/weekly periods, app icons, visits/unlocks, detail views and honest missing-data states. Longer local aggregates need explicit retention/deletion/export controls. |
+| Usage | Today, Yesterday and 7-day app time, app icons and per-app summaries are in development source. Visit/unlock counts and physical acceptance remain open. Longer local aggregates need explicit retention/deletion/export controls. |
 | Notifications | Quiet optional phone-use snapshots, correct onboarding permission/status, privacy on the lock screen, cancellation on revoked access and bounded background work. Sending notifications is distinct from reading other apps’ messages. |
 | Focus | Manual timed breaks with correct crediting, session reflections/tags, richer live/completion UI, quick actions and additional widget polish. Personal breaks must never pause family protection. |
-| Routines | Bedtime/wind-down tools, reusable app groups, exceptions and deliberate DND integration with Android’s actual permission model. |
+| Routines | Bedtime schedule, independent app selections and last-window usage are in development source. Reusable app groups, DND and physical acceptance remain open. |
 | Distraction tools | Opening delays, intentional pauses, visit/frequency allowances, supported short-video counters and separate per-feature scope. No punitive streaks or fabricated wellbeing scores. |
 | Browsing/network | Supported URL/day budgets, broader browser evidence, DNS/TCP/private-DNS/DoH/network-change coverage and optional app-network policies only after architecture and privacy validation. |
 | Strict | Supported parent-owned settings, App info, uninstall, VPN configuration/client/store/installer paths; authenticated maintenance; positive/false-positive OEM tests. Personal Android controls and managed policy remain distinct. |
@@ -51,7 +51,7 @@ retention or weak recovery mechanisms into M57.
 | Source snapshot | Checked terms and useful areas | Reuse state |
 | --- | --- | --- |
 | Curbox `9f8250c622092a13bd259f13cebeb13169f9a0a8` | GPLv3; native usage periods/aggregation, focus, permission flows and controls. [Source](https://github.com/curbox-app/curbox-android) | Existing inherited components retain notices. Newly reviewed helpers still need deliberate adaptation/tests/attribution. |
-| Zenith `126b920eefc2b08b5fc87280151a00cb790f22d6` | GPLv3; expressive transitions, onboarding paths, pause/delay/bedtime/usage UI. [Source](https://github.com/1372Slash/Zenith) | Reviewed as a compatible source; no new code copied yet. |
+| Zenith `2cd777f9fb20d1b37320f262e86fed79290c9867` | GPLv3; expressive transitions, onboarding paths, pause/delay/bedtime/usage UI. [Source](https://github.com/1372Slash/Zenith) | Credited design source for the native bedtime, usage and transition work. See NOTICE. |
 | SelfLock `57ea0a89cf1749e4b37f3232a4819c0fe61bbf17` | MIT; rule-state/usage/schedule organization. [Source](https://github.com/EtashTyagi/SelfLock) | No code copied. Its password override design is not M57’s recovery policy. |
 | Rethink `07fe5373f8aec3b68344db98223a145c404ed386` | App Apache-2.0; transport dependencies have separate terms, including MPL-2.0. [Source](https://github.com/celzero/rethink-app) | Network architecture review; no stack imported and no DNS-query logging adopted. |
 | Supplied Mindful `b6eb68d500463c54e1127b6cc7ad540f02ae0c8e` | File headers GPL-2.0, no later-version grant found; grouped controls, usage and focus interaction reference. | No source/assets imported into the AGPLv3/GPLv3 app under these terms. |

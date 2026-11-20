@@ -31,7 +31,7 @@ class SetupPages(private val activity: Activity, private val authorised: () -> B
             else -> {
                 Illustrations.addTo(page, "ready-for-your-day", 180)
                 page.addView(LyraUi.text(activity, "A little space.\nReady when you are.", 30f, bold = true).apply { isAccessibilityHeading = true })
-                page.addView(LyraUi.text(activity, "Your timer is ready. Other tools follow the access and boundaries you choose; Home shows what is actually connected.", 16f, LyraUi.muted))
+                page.addView(LyraUi.text(activity, "Your timer is ready. Other tools follow the access and boundaries you choose; Focus shows what is actually connected.", 16f, LyraUi.muted))
                 page.addView(SummaryTiles(activity, listOf(
                     SummaryMetric("Screen controls", if (stories.accessible() && LyraAccessibilityService.connected) "Connected" else "Needs access", "Apps, videos and supported addresses", M57Icon.SHIELD, true),
                     SummaryMetric("App-time insights", if (stories.usageReady()) "Ready" else "Optional", "Local estimates and daily limits", M57Icon.INSIGHTS)
@@ -52,7 +52,7 @@ class SetupPages(private val activity: Activity, private val authorised: () -> B
         val actions = LyraUi.column(activity, 0)
         actions.addView(LyraUi.button(activity, if (step == 6) if (stories.accessible()) "Finish setup" else "Continue with the timer for now" else if (waiting) "Not now · continue" else "Continue") {
             if (!authorised()) return@button
-            if (step == 6) { store.setupComplete = true; navigate(AdminPage.OVERVIEW) } else advance()
+            if (step == 6) { store.setupComplete = true; navigate(AdminPage.CONTROLS) } else advance()
         })
         if (step > 0) actions.addView(LyraUi.link(activity, "Previous step") { if (authorised()) { store.setupStep = step - 1; navigate(AdminPage.SETUP) } })
         footer(actions)

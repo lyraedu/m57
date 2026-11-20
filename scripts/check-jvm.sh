@@ -13,6 +13,7 @@ if command -v javac >/dev/null 2>&1; then
         app/src/main/java/com/lyra/blocker/GoogleAiPolicy.java \
         app/src/main/java/com/lyra/blocker/FocusPolicy.java \
         app/src/main/java/com/lyra/blocker/RoutinePolicy.java \
+        app/src/main/java/com/lyra/blocker/BedtimePolicy.java \
         app/src/main/java/com/lyra/blocker/UsageTimeline.java \
         app/src/main/java/com/lyra/blocker/HandoffPolicy.java \
         app/src/main/java/com/lyra/blocker/PasswordCredential.java \
@@ -30,6 +31,7 @@ else
         app/src/main/java/com/lyra/blocker/GoogleAiPolicy.java \
         app/src/main/java/com/lyra/blocker/FocusPolicy.java \
         app/src/main/java/com/lyra/blocker/RoutinePolicy.java \
+        app/src/main/java/com/lyra/blocker/BedtimePolicy.java \
         app/src/main/java/com/lyra/blocker/UsageTimeline.java \
         app/src/main/java/com/lyra/blocker/HandoffPolicy.java \
         app/src/main/java/com/lyra/blocker/PasswordCredential.java \

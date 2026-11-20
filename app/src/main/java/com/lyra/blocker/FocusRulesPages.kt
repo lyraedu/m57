@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
+import android.view.View
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -114,6 +115,97 @@ class FocusRulesPages(private val activity: Activity, private val authorised: ()
                 }
             }
     }
+    fun bedtime(page: LinearLayout, footer: (View) -> Unit) {
+        heading(page, "Bedtime settings", "Choose when the schedule runs and which apps should wait.")
+        var draft = store.bedtime
+        val enabled = Switch(activity).apply {
+            text = "Use bedtime schedule"
+            isChecked = draft.enabled
+            minHeight = LyraUi.dp(activity, 52)
+        }
+        val schedule = LyraUi.card(activity)
+        val start = bedtimeTime("Starts", draft.start) { draft = draft.copy(start = it) }
+        val end = bedtimeTime("Ends", draft.end) { draft = draft.copy(end = it) }
+        schedule.addView(start)
+        schedule.addView(end)
+        val dayPicker = LyraUi.column(activity, 0).apply { visibility = View.GONE }
+        dayPicker.addView(LyraUi.text(activity, "For an overnight schedule, choose the day it begins.", 14f, LyraUi.muted))
+        val days = java.time.DayOfWeek.values().map { day ->
+            CheckBox(activity).apply {
+                text = day.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault())
+                minHeight = LyraUi.dp(activity, 48)
+                isChecked = day.value in draft.days
+                dayPicker.addView(this)
+            }
+        }
+        fun daysLabel(): String = when (val count = days.count { it.isChecked }) {
+            0 -> "Choose repeat days"
+            7 -> "Repeats every night"
+            else -> "Repeats on $count nights"
+        }
+        val chooseDays = LyraUi.button(activity, daysLabel(), false) { Motion.reveal(dayPicker) }
+        days.forEach { day -> day.setOnCheckedChangeListener { _, _ -> chooseDays.text = daysLabel() } }
+        schedule.addView(chooseDays)
+        schedule.addView(dayPicker)
+
+        page.addView(enabled)
+        page.addView(schedule)
+        val apps = draft.apps.toMutableSet()
+        val count = LyraUi.text(activity, "${apps.size} selected · calls and system controls stay available", 14f, LyraUi.muted)
+        val appPicker = LyraUi.column(activity, 0)
+        val reveal = LyraUi.button(activity, "Choose apps", false) {}
+        reveal.setOnClickListener {
+            Motion.reveal(appPicker)
+            reveal.text = if (appPicker.visibility == View.VISIBLE) "Hide apps" else "Choose apps"
+        }
+        page.addView(LyraUi.text(activity, "Apps to hold", 20f, bold = true))
+        page.addView(count)
+        val save = LyraUi.button(activity, "Save bedtime settings") {
+            val selected = days.mapIndexedNotNull { index, box -> (index + 1).takeIf { box.isChecked } }.toSet()
+            when {
+                draft.start == draft.end -> toast("Start and end must be different")
+                selected.isEmpty() -> toast("Choose at least one night")
+                canEdit() -> {
+                    store.bedtime = draft.copy(enabled = enabled.isChecked, days = selected, apps = apps.toSet())
+                    toast("Bedtime settings saved")
+                    navigate(AdminPage.BEDTIME)
+                }
+            }
+        }
+        footer(LyraUi.column(activity, 0).apply { addView(save) })
+        page.addView(reveal)
+        page.addView(appPicker)
+        appPicker.visibility = View.GONE
+        appList(appPicker) { app, rows ->
+            rows.addView(CheckBox(activity).apply {
+                text = app.label
+                minHeight = LyraUi.dp(activity, 48)
+                isChecked = app.packageName in apps
+                setOnCheckedChangeListener { _, checked ->
+                    if (checked && apps.size >= 500 && app.packageName !in apps) {
+                        isChecked = false
+                    } else if (checked) apps.add(app.packageName) else apps.remove(app.packageName)
+                    count.text = "${apps.size} selected · calls and system controls stay available"
+                }
+            })
+        }
+    }
+
+    private fun bedtimeTime(label: String, time: Int, changed: (Int) -> Unit): android.widget.Button {
+        var minutes = time
+        lateinit var button: android.widget.Button
+        button = LyraUi.button(activity, "$label ${BedtimeCard.time(activity, minutes)}", false) {
+            val picker = TimePickerDialog(activity, { _, hour, minute ->
+                minutes = hour * 60 + minute
+                changed(minutes)
+                button.text = "$label ${BedtimeCard.time(activity, minutes)}"
+            }, minutes / 60, minutes % 60, android.text.format.DateFormat.is24HourFormat(activity))
+            dialog = picker
+            picker.show()
+        }
+        return button
+    }
+
     fun routines(page: LinearLayout) {
         heading(page, "Let a routine\nhold the space.", "Repeat your focus list on selected days. Times follow this phone's timezone, including overnight windows.")
         Illustrations.addTo(page, "routine-rhythm", 180)

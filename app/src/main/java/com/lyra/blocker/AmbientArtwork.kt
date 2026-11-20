@@ -21,7 +21,10 @@ import kotlin.math.abs
 import kotlin.math.sin
 
 /** A small artwork breath, only while visible. Native text and controls never drift. */
-class AmbientArtwork(private val view: ImageView) : View.OnAttachStateChangeListener {
+class AmbientArtwork(
+    private val view: View,
+    private val onFrame: ((Float) -> Unit)? = null
+) : View.OnAttachStateChangeListener {
     private var attached = false
     private var animator: ValueAnimator? = null
     private val visible = Rect()
@@ -60,7 +63,7 @@ class AmbientArtwork(private val view: ImageView) : View.OnAttachStateChangeList
         }
     }
     fun refresh() {
-        val active = attached && view.drawable != null && view.isShown && view.windowVisibility == View.VISIBLE &&
+        val active = attached && (view !is ImageView || view.drawable != null) && view.isShown && view.windowVisibility == View.VISIBLE &&
             view.hasWindowFocus() && view.getGlobalVisibleRect(visible) && visible.height() >= LyraUi.dp(context, 24) && Motion.enabled(context)
         if (!active) { stop(); return }
         if (animator != null) return
@@ -68,12 +71,22 @@ class AmbientArtwork(private val view: ImageView) : View.OnAttachStateChangeList
         animator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 9_000; repeatCount = ValueAnimator.INFINITE; interpolator = LinearInterpolator()
             addUpdateListener {
-                val next = sin((it.animatedValue as Float) * Math.PI * 2).toFloat() * distance
+                val phase = it.animatedValue as Float
+                if (onFrame != null) {
+                    onFrame.invoke(phase)
+                    return@addUpdateListener
+                }
+                val next = sin(phase * Math.PI * 2).toFloat() * distance
                 // Subpixel changes need no new display-list update on every frame.
                 if (abs(next - view.translationY) >= context.resources.displayMetrics.density * .12f) view.translationY = next
             }
             start()
         }
     }
-    private fun stop() { animator?.cancel(); animator = null; view.translationY = 0f }
+    private fun stop() {
+        if (animator == null) return
+        animator?.cancel()
+        animator = null
+        if (onFrame == null) view.translationY = 0f else onFrame.invoke(0f)
+    }
 }

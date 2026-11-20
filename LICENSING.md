@@ -41,6 +41,13 @@ as provided by those sections. This is not a relicensing of Curbox's copyright.
   are in app/src/main/assets/HOSTS-SOURCES.txt; do not assume every aggregated
   data source is MIT. Refer to each source for its terms.
 
+## Design attribution
+
+The bedtime countdown and intervention, usage breakdown and three-day guidance,
+and motion design draw on [Zenith by 1372Slash and contributors](https://github.com/1372Slash/Zenith/tree/2cd777f9fb20d1b37320f262e86fed79290c9867)
+(GPLv3). M57's implementation uses original Views, Canvas artwork, and policies.
+See NOTICE and the in-app source and licenses screen.
+
 ## Source for distributed builds
 
 For every APK, publish its exact corresponding source, build scripts and

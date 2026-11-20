@@ -20,6 +20,7 @@ import android.widget.Toast
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 
@@ -32,7 +33,7 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
     private val worker = Executors.newSingleThreadExecutor()
     private var generation = 0
     private var dialog: AlertDialog? = null
-    var currentTab = "Home"
+    var currentTab = "Focus"
         private set
     fun stop() { generation++; handler.removeCallbacksAndMessages(null); dialog?.dismiss(); dialog = null }
     fun close() { stop(); worker.shutdown() }
@@ -41,9 +42,9 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
         focus.session?.let { if (focus.state(it).finished()) focus.finish() }
         val root = page(tab)
         when (tab) {
-            "Home" -> home(root)
             "Focus" -> timer(root)
             "Plan" -> plan(root)
+            "Bedtime" -> bedtime(root)
             "Insights" -> insights(root)
             else -> settings(root)
         }
@@ -53,36 +54,6 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
     }
     private fun card(root: LinearLayout, symbol: String, title: String, detail: String, action: () -> Unit) {
         root.addView(LyraUi.routeCard(activity, symbol, title, detail, action))
-    }
-    private fun home(root: LinearLayout) {
-        val active = focus.session
-        val todayFocused = focus.todayFocused
-        root.addView(LyraUi.badge(activity, if (active != null) "TIME YOU CHOSE" else "YOUR ATTENTION BELONGS TO YOU"))
-        title(root, if (store.familyManaged) "A calmer phone.\nA clearer day." else "Room for\nwhat matters.",
-            if (store.familyManaged) "Check the boundaries on this phone. Parent controls are one password away." else "Focus time, fewer endless videos, and boundaries you choose.")
-        if (!FocusStore.storageHealthy) root.addView(LyraUi.text(activity, "M57 could not save the latest focus change. Check free storage, and export your history before closing the app.", 15f, LyraUi.orange))
-        if (store.familyManaged) {
-            protectionSummary(root)
-            root.addView(LyraUi.button(activity, "Parent controls") { admin(AdminPage.OVERVIEW) })
-        }
-        if (active != null) card(root, "◷", "Your session is under way", "${active.title} · return to your timer") { show("Focus") }
-        else root.addView(LyraUi.button(activity, "Start a focus session") { show("Focus") })
-        root.addView(LyraUi.section(activity, "A little space, today", "Small moments add up.", green = true))
-        root.addView(SummaryTiles(activity, listOf(
-            SummaryMetric("Time for yourself", "${todayFocused / 60_000} min", "Focused today", M57Icon.FOCUS),
-            SummaryMetric("Your daily direction", "${focus.goalMinutes} min", "A goal, without pressure", M57Icon.PLAN, true)
-        )))
-        val art = FocusArt(activity).apply { progress = todayFocused.toFloat() / (focus.goalMinutes * 60_000f) }
-        if (!Illustrations.addTo(root, "attention-garden", 230)) root.addView(art, LinearLayout.LayoutParams(-1, LyraUi.dp(activity, 230)))
-        if (!store.familyManaged) protectionSummary(root)
-        root.addView(LyraUi.section(activity, "Choose what helps", "Each boundary has its own controls."))
-        card(root, "Ⅱ", "Break the scroll", "Short-video controls with a blocking or reminder choice.") { admin(AdminPage.SHORT_VIDEOS) }
-        card(root, "◎", "Make a plan", "Choose focus apps, daily limits and recurring routines.") { show("Plan") }
-        card(root, "◇", "Browse with boundaries", "Choose local website categories and domain exceptions.") { admin(AdminPage.FAMILY) }
-        if (store.aiEnabled) root.addView(LyraUi.button(activity, "Open Lyra  ↗", false) {
-            if (!LyraLauncher.open(activity, store)) toast("Install a browser to open Lyra")
-        })
-        root.addView(LyraUi.link(activity, "How these controls work") { preview() })
     }
     private fun protectionSummary(root: LinearLayout) {
         val credentialReady = !store.familyManaged || store.hasPassword
@@ -127,13 +98,14 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
         val session = focus.session
         if (session != null) { running(root, session); return }
         title(root, "One thing\nat a time.", "Pick a timer, name your intention, and put the distractions on hold.")
-        Illustrations.addTo(root, "one-thing", 180)
+        if (!FocusStore.storageHealthy) root.addView(LyraUi.text(activity, "M57 could not save the latest focus change. Check free storage and export your history.", 15f, LyraUi.orange))
         FocusSetup(activity, focus, accessible() && LyraAccessibilityService.connected,
             rules = { admin(AdminPage.FOCUS_RULES) }) { draft, start ->
             val launch = { start(); if (focus.session != null) show("Focus"); Unit }
             if (draft.committed) confirm("Keep this commitment?", "There is no early-end button for this session. Choose a realistic duration; calls and Android controls stay available.", launch)
             else launch()
         }.addTo(root)
+        protectionSummary(root)
     }
     private fun running(root: LinearLayout, session: FocusSession) {
         title(root, session.title, if (session.strict) "A commitment you made to yourself." else "Stay with one thing. You can finish early if you need to.")
@@ -182,12 +154,10 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
         if (!session.strict) root.addView(LyraUi.button(activity, "Finish session", false) {
             confirm("Finish this session?", "Save the time you focused and release this session's focus list. Other protection stays active.") { if (focus.finish(manual = true)) show("Insights") }
         })
-        root.addView(LyraUi.link(activity, "Back to my day") { show("Home") })
     }
     private fun plan(root: LinearLayout) {
-        title(root, "Fewer decisions.\nMore intention.", "Set boundaries once, then let your day unfold.")
-        Illustrations.addTo(root, "routine-rhythm", 180)
-        root.addView(LyraUi.section(activity, "Your boundaries", "Choose the distractions you want a hand with."))
+        title(root, "Plan", "Give distractions a time and place.")
+        card(root, "☾", "Bedtime", BedtimeCard.summary(activity, focus.bedtime)) { show("Bedtime") }
         card(root, "◎", "Focus list", "${focus.blockedApps.size} apps · ${focus.blockedSites.size} websites · ${if (focus.studyBrowser) "study allowlist on" else "study allowlist off"}") { admin(AdminPage.FOCUS_RULES) }
         card(root, "◷", "Daily app limits", "${AppLimitStore(activity).limits.size} chosen apps. Reset at local midnight.") { admin(AdminPage.APP_LIMITS) }
         card(root, "▦", "Routines", "${focus.routines.count { it.enabled }} enabled. Repeat on the days you choose.") { admin(AdminPage.ROUTINES) }
@@ -202,12 +172,50 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
                 if (value == null || value !in 5..480) goal.error = "Choose 5–480 minutes" else { focus.goalMinutes = value; FocusWidget.update(activity); toast("Goal saved") }
             })
         })
-        root.addView(LyraUi.text(activity, "Focus lists and routines use accessibility. Website rules need a visible address in a supported browser. A daily limit also needs local usage access. Connection health is shown on Home.", 14f, LyraUi.muted))
+        root.addView(LyraUi.text(activity, "Focus lists and routines use accessibility. Website rules need a visible address in a supported browser. A daily limit also needs local usage access. Connection health is shown on Focus.", 14f, LyraUi.muted))
         if (store.familyManaged) root.addView(LyraUi.badge(activity, "BOUNDARY CHANGES NEED ADMINISTRATOR ACCESS"))
     }
+    private fun bedtime(root: LinearLayout) {
+        root.addView(LyraUi.link(activity, "‹ Plan") { show("Plan") })
+        title(root, "Bedtime", "Wind down on the days you choose.")
+        val schedule = focus.bedtime
+        root.addView(BedtimeCard(activity, schedule, accessible() && LyraAccessibilityService.connected && !store.paused))
+        card(root, "☾", "Bedtime settings", "Set your hours, days and apps to hold.") { admin(AdminPage.BEDTIME) }
+        if (!schedule.enabled) return
+        val window = BedtimePolicy.latestCompleted(schedule.days, schedule.start, schedule.end, ZonedDateTime.now()) ?: return
+        if (!focus.usageEnabled || !UsageAccess.granted(activity)) return
+        val activityCard = LyraUi.card(activity)
+        val result = LyraUi.text(activity, "Reading Android usage…", 16f, LyraUi.muted)
+        activityCard.addView(LyraUi.text(activity, "Last scheduled night", 20f, bold = true))
+        val date = window.start().format(DateTimeFormatter.ofPattern("EEE d MMM"))
+        val hours = "${BedtimeCard.time(activity, schedule.start)} – ${BedtimeCard.time(activity, schedule.end)}"
+        activityCard.addView(LyraUi.text(activity, "$date · $hours", 14f, LyraUi.muted))
+        activityCard.addView(result)
+        root.addView(activityCard)
+        val ticket = generation
+        worker.execute {
+            val snapshot = UsageAccess.sample(activity, window.start(), window.end())
+            activity.runOnUiThread {
+                if (ticket != generation || !result.isAttachedToWindow || activity.isDestroyed) return@runOnUiThread
+                val total = snapshot.totals.filterKeys { it != activity.packageName }.values.sum()
+                result.text = when {
+                    !snapshot.available || !focus.usageEnabled || !UsageAccess.granted(activity) -> "Usage is unavailable for this night."
+                    total == 0L -> "Android returned no foreground time for these hours."
+                    total < 60_000L -> "Less than a minute of estimated foreground time"
+                    else -> "${total / 60_000} min of estimated foreground time"
+                }
+                Motion.enter(result)
+            }
+        }
+    }
+
     private fun insights(root: LinearLayout) {
         title(root, "A little perspective.", "Your own focus history and optional app-use estimates. Kept on this phone.")
-        Illustrations.addTo(root, if (focus.history.isEmpty()) "first-page" else "local-history", 170)
+        root.addView(AppUsagePanel(activity, worker, { admin(AdminPage.APP_LIMITS) }) { name, detail ->
+            dialog = AlertDialog.Builder(activity).setTitle(name).setMessage(detail)
+                .setPositiveButton("Done", null).show().also(LyraUi::styleDialog)
+        })
+        root.addView(LyraUi.section(activity, "Focus history", "Time you set aside.", green = true))
         val history = focus.history
         val minutes = focus.todayFocused / 60_000
         root.addView(LyraUi.card(activity).apply {
@@ -233,28 +241,6 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
         if (history.isEmpty()) root.addView(LyraUi.text(activity, "Your first session starts the story. No scores, no pressure.", 15f, LyraUi.muted))
         history.take(12).forEach { record -> root.addView(LyraUi.feature(activity, if (record.completed) "✓" else "◷", record.title,
             "${record.focused / 60_000} minutes · ${if (record.completed) "completed" else "ended"} · ${DateTimeFormatter.ofPattern("MMM d, HH:mm").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(record.ended))}")) }
-        root.addView(LyraUi.section(activity, "App use today", "Optional estimates from Android. Kept here.", green = true))
-        if (!focus.usageEnabled || !UsageAccess.granted(activity)) {
-            root.addView(LyraUi.text(activity, "App-use insights are optional. Android usage access provides app identities and time estimates. M57 processes them locally and does not upload or keep event logs.", 14f, LyraUi.muted))
-            root.addView(LyraUi.button(activity, "Review usage access", false) { admin(AdminPage.APP_LIMITS) })
-        } else {
-            val result = LyraUi.column(activity, 0); result.addView(LyraUi.text(activity, "Reading local Android estimates…", 14f, LyraUi.muted)); root.addView(result)
-            val ticket = generation
-            worker.execute {
-                val snapshot = UsageAccess.today(activity)
-                val apps = runCatching { AppCatalog.load(activity).associate { it.packageName to it.label } }.getOrDefault(emptyMap())
-                activity.runOnUiThread {
-                    if (ticket != generation || activity.isDestroyed) return@runOnUiThread
-                    result.removeAllViews()
-                    if (!snapshot.available) result.addView(LyraUi.text(activity, snapshot.problem ?: "Usage unavailable", 14f, LyraUi.muted))
-                    else {
-                        val rows = snapshot.totals.entries.filter { it.value >= 60_000 && it.key != activity.packageName }.sortedByDescending { it.value }.take(8)
-                        if (rows.isEmpty()) result.addView(LyraUi.text(activity, "No app-time estimate above one minute today.", 14f, LyraUi.muted))
-                        rows.forEach { (pkg, time) -> result.addView(LyraUi.feature(activity, "◷", apps[pkg] ?: pkg, "${time / 60_000} minutes estimated")) }
-                    }
-                }
-            }
-        }
         root.addView(LyraUi.text(activity, "Foreground estimates can differ from Android's Digital Wellbeing, especially in split screen. Sessions are credited to the day they end. M57 retains the most recent 500 sessions.", 12f, LyraUi.muted))
         root.addView(LyraUi.button(activity, "Export focus history", false) {
             runCatching { activity.startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json").putExtra(Intent.EXTRA_TITLE, "m57-focus-history.json"), EXPORT_REQUEST) }.onFailure { toast("This phone has no document picker") }
@@ -265,9 +251,11 @@ class PersonalPages(private val activity: Activity, private val page: (String) -
     }
     private fun settings(root: LinearLayout) {
         title(root, "Make it yours.", if (store.familyManaged) "Personal tools are yours. Protection settings belong to the administrator." else "Every control is included. No account or subscription required.")
-        Illustrations.addTo(root, "privacy-drawer", 170)
-        card(root, "◎", if (store.familyManaged) "Parent controls" else "Protection settings", "Short videos, browsing, optional Lyra, device access and pauses.") { admin(AdminPage.OVERVIEW) }
+        card(root, "◎", if (store.familyManaged) "Parent controls" else "Protection settings", "Short videos, browsing, optional Lyra, device access and pauses.") { admin(AdminPage.CONTROLS) }
         card(root, "♡", "Review setup & Android access", "Illustrated guides to app time, accessibility, background running, notifications and free, open-source software.") { admin(AdminPage.SETUP) }
+        if (store.aiEnabled) root.addView(LyraUi.button(activity, "Open Lyra", false) {
+            if (!LyraLauncher.open(activity, store)) toast("Install a browser to open Lyra")
+        })
         root.addView(Switch(activity).apply {
             text = "Reduce motion"; minHeight = LyraUi.dp(activity, 56); setTextColor(LyraUi.ink)
             val prefs = activity.getSharedPreferences("m57_experience", Activity.MODE_PRIVATE)

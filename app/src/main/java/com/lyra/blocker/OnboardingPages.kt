@@ -92,7 +92,7 @@ class OnboardingPages(private val activity: Activity, private val page: () -> Li
             Step.READY -> {
                 heading("Make some room.", "Start with one small focus session. Add the boundaries that help, at your pace.", "ready-for-your-day")
                 root.addView(LyraUi.feature(activity, "◎", "Your timer is ready", "No account or Android permission needed to make a start."))
-                root.addView(LyraUi.feature(activity, "♡", if (accessible()) "Android accessibility enabled" else "Screen controls are waiting", "Home shows the actual service connection and the state of each tool."))
+                root.addView(LyraUi.feature(activity, "♡", if (accessible()) "Android accessibility enabled" else "Screen controls are waiting", "Focus shows the actual service connection and the state of each tool."))
                 root.addView(LyraUi.feature(activity, "◷", if (stories.usageReady()) "Local app-time access ready" else "App-time insights remain optional", "You can review every access choice from Settings later."))
             }
         }

@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.lyra.blocker
 
-enum class AdminTab(val title: String) { OVERVIEW("Overview"), CONTROLS("Controls"), SETTINGS("Settings") }
+enum class AdminTab(val title: String) { CONTROLS("Controls"), SETTINGS("Settings") }
 
 enum class AdminPage(val title: String, val tab: AdminTab) {
-    OVERVIEW("Overview", AdminTab.OVERVIEW),
     CONTROLS("Controls", AdminTab.CONTROLS),
     SETTINGS("Settings", AdminTab.SETTINGS),
     FOCUS_RULES("Focus apps & sites", AdminTab.CONTROLS),
     APP_LIMITS("Daily app limits", AdminTab.CONTROLS),
     ROUTINES("Routines", AdminTab.CONTROLS),
+    BEDTIME("Bedtime", AdminTab.CONTROLS),
     SETUP("Set up M57", AdminTab.SETTINGS),
     AI("AI redirection", AdminTab.CONTROLS),
     APP_RULES("App & website rules", AdminTab.CONTROLS),
@@ -20,16 +20,16 @@ enum class AdminPage(val title: String, val tab: AdminTab) {
     FAMILY_EXCEPTIONS("Domain exceptions", AdminTab.CONTROLS),
     FAMILY_SOURCES("List sources", AdminTab.CONTROLS),
     DEVICE_ACCESS("Device access", AdminTab.SETTINGS),
-    PAUSE("Protection schedule", AdminTab.OVERVIEW),
-    CUSTOM_PAUSE("Custom end time", AdminTab.OVERVIEW);
+    PAUSE("Protection schedule", AdminTab.CONTROLS),
+    CUSTOM_PAUSE("Custom end time", AdminTab.CONTROLS);
 
     val parent: AdminPage? get() = when (this) {
-        AI, SHORT_VIDEOS, FAMILY, FOCUS_RULES, APP_LIMITS, ROUTINES -> CONTROLS
+        AI, SHORT_VIDEOS, FAMILY, FOCUS_RULES, APP_LIMITS, ROUTINES, BEDTIME -> CONTROLS
         APP_RULES, META -> AI
         FAMILY_CATEGORY, FAMILY_EXCEPTIONS, FAMILY_SOURCES -> FAMILY
         DEVICE_ACCESS -> SETTINGS
-        SETUP -> OVERVIEW
-        PAUSE -> OVERVIEW
+        SETUP -> SETTINGS
+        PAUSE -> CONTROLS
         CUSTOM_PAUSE -> PAUSE
         else -> null
     }
@@ -47,6 +47,7 @@ val controlCategories = listOf(
     ControlCategory(AdminPage.FOCUS_RULES, "◎", "Chosen apps, websites and study browsing during focus", "timer study allowlist personal focus"),
     ControlCategory(AdminPage.APP_LIMITS, "◷", "Daily app allowances with local usage access", "time daily limits usage statistics"),
     ControlCategory(AdminPage.ROUTINES, "▦", "Repeat your focus list on selected days and times", "routine schedule weekly overnight"),
+    ControlCategory(AdminPage.BEDTIME, "☾", "Scheduled wind-down with a separate app list", "sleep overnight evening schedule"),
     ControlCategory(AdminPage.AI, "↗", "Lyra destination, countdown, PWA and app rules", "chatgpt gemini claude models artificial intelligence redirect"),
     ControlCategory(AdminPage.SHORT_VIDEOS, "Ⅱ", "YouTube Shorts and supported full-screen Reels controls", "instagram snapchat josh doomscroll video"),
     ControlCategory(AdminPage.FAMILY, "♡", "Website categories, local DNS VPN and browser protection", "adult content malware stevenblack hosts lists sync"),
